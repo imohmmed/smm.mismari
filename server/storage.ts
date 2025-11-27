@@ -24,6 +24,8 @@ export interface IStorage {
   updateUserBalance(id: string, amount: number, operation: 'add' | 'subtract'): Promise<User | undefined>;
   updateUserTotalSpent(id: string, amount: number): Promise<User | undefined>;
   updateUserDiscount(id: string, discount: number): Promise<User | undefined>;
+  updateUserProfile(id: string, data: { username?: string; email?: string; phone?: string }): Promise<User | undefined>;
+  updateUserPassword(id: string, newPassword: string): Promise<User | undefined>;
   validatePassword(user: User, password: string): Promise<boolean>;
   
   getAllUsers(): Promise<User[]>;
@@ -113,6 +115,28 @@ export class DatabaseStorage implements IStorage {
   async updateUserDiscount(id: string, discount: number): Promise<User | undefined> {
     const [updated] = await db.update(users)
       .set({ discount })
+      .where(eq(users.id, id))
+      .returning();
+    return updated;
+  }
+
+  async updateUserProfile(id: string, data: { username?: string; email?: string; phone?: string }): Promise<User | undefined> {
+    const updateData: Partial<User> = {};
+    if (data.username) updateData.username = data.username;
+    if (data.email) updateData.email = data.email;
+    if (data.phone !== undefined) updateData.phone = data.phone;
+
+    const [updated] = await db.update(users)
+      .set(updateData)
+      .where(eq(users.id, id))
+      .returning();
+    return updated;
+  }
+
+  async updateUserPassword(id: string, newPassword: string): Promise<User | undefined> {
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    const [updated] = await db.update(users)
+      .set({ password: hashedPassword })
       .where(eq(users.id, id))
       .returning();
     return updated;

@@ -182,6 +182,104 @@ export async function registerRoutes(
     });
   });
 
+  // Update user profile with password confirmation
+  app.post("/api/auth/update-profile", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { password, username, email, phone } = req.body;
+      
+      if (!password) {
+        return res.status(400).json({ error: "كلمة المرور مطلوبة" });
+      }
+
+      const user = await storage.getUser(req.session.userId!);
+      if (!user) {
+        return res.status(404).json({ error: "المستخدم غير موجود" });
+      }
+
+      // Verify password
+      const isValidPassword = await storage.validatePassword(user, password);
+      if (!isValidPassword) {
+        return res.status(401).json({ error: "كلمة المرور غير صحيحة" });
+      }
+
+      // Check if new username is taken (if changing)
+      if (username && username !== user.username) {
+        const existingUsername = await storage.getUserByUsername(username);
+        if (existingUsername) {
+          return res.status(400).json({ error: "اسم المستخدم مستخدم بالفعل" });
+        }
+      }
+
+      // Check if new email is taken (if changing)
+      if (email && email !== user.email) {
+        const existingEmail = await storage.getUserByEmail(email);
+        if (existingEmail) {
+          return res.status(400).json({ error: "البريد الإلكتروني مستخدم بالفعل" });
+        }
+      }
+
+      // Update user profile
+      const updatedUser = await storage.updateUserProfile(req.session.userId!, {
+        username: username || user.username,
+        email: email || user.email,
+        phone: phone !== undefined ? phone : user.phone,
+      });
+
+      res.json({
+        success: true,
+        user: {
+          id: updatedUser?.id,
+          username: updatedUser?.username,
+          email: updatedUser?.email,
+          phone: updatedUser?.phone,
+          balance: updatedUser?.balance,
+          role: updatedUser?.role,
+        },
+        message: "تم تحديث البيانات بنجاح",
+      });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ error: "فشل تحديث البيانات" });
+    }
+  });
+
+  // Change password
+  app.post("/api/auth/change-password", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: "جميع الحقول مطلوبة" });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: "كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل" });
+      }
+
+      const user = await storage.getUser(req.session.userId!);
+      if (!user) {
+        return res.status(404).json({ error: "المستخدم غير موجود" });
+      }
+
+      // Verify current password
+      const isValidPassword = await storage.validatePassword(user, currentPassword);
+      if (!isValidPassword) {
+        return res.status(401).json({ error: "كلمة المرور الحالية غير صحيحة" });
+      }
+
+      // Update password
+      await storage.updateUserPassword(req.session.userId!, newPassword);
+
+      res.json({
+        success: true,
+        message: "تم تغيير كلمة المرور بنجاح",
+      });
+    } catch (error) {
+      console.error("Error changing password:", error);
+      res.status(500).json({ error: "فشل تغيير كلمة المرور" });
+    }
+  });
+
   app.get("/api/auth/me", async (req: Request, res: Response) => {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Not authenticated" });

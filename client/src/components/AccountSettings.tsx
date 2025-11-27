@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,12 +7,24 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { 
   Mail, 
   Phone, 
   Lock,
   User,
-  LogOut
+  LogOut,
+  Loader2,
+  Save
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AccountSettingsProps {
   user: {
@@ -20,18 +33,150 @@ interface AccountSettingsProps {
     phone: string;
     avatar?: string;
   };
-  onChangeUsername?: () => void;
-  onChangeEmail?: () => void;
-  onChangePhone?: () => void;
-  onChangePassword?: () => void;
   onLogout?: () => void;
 }
 
-export default function AccountSettings({ user, onChangeUsername, onChangeEmail, onChangePhone, onChangePassword, onLogout }: AccountSettingsProps) {
+export default function AccountSettings({ user, onLogout }: AccountSettingsProps) {
   const { t } = useLanguage();
+  const { toast } = useToast();
+  const { refetchUser } = useAuth();
+  
+  const [username, setUsername] = useState(user.name);
+  const [email, setEmail] = useState(user.email);
+  const [phone, setPhone] = useState(user.phone);
+  
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [confirmPasswordValue, setConfirmPasswordValue] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  const hasProfileChanges = username !== user.name || email !== user.email || phone !== user.phone;
+
+  const handleSaveProfile = async () => {
+    if (!hasProfileChanges) {
+      toast({
+        title: "لا توجد تغييرات",
+        description: "لم تقم بتغيير أي بيانات",
+      });
+      return;
+    }
+    setShowPasswordDialog(true);
+  };
+
+  const confirmSaveProfile = async () => {
+    if (!confirmPasswordValue) {
+      toast({
+        title: "خطأ",
+        description: "يرجى إدخال كلمة المرور",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const res = await apiRequest("POST", "/api/auth/update-profile", {
+        password: confirmPasswordValue,
+        username,
+        email,
+        phone,
+      });
+      const data = await res.json();
+      
+      if (data.error) {
+        toast({
+          title: "خطأ",
+          description: data.error,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "تم بنجاح",
+          description: data.message,
+        });
+        refetchUser();
+        setShowPasswordDialog(false);
+        setConfirmPasswordValue('');
+      }
+    } catch (error: any) {
+      toast({
+        title: "خطأ",
+        description: "فشل تحديث البيانات",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword) {
+      toast({
+        title: "خطأ",
+        description: "يرجى ملء جميع الحقول",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "خطأ",
+        description: "كلمات المرور غير متطابقة",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "خطأ",
+        description: "كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const res = await apiRequest("POST", "/api/auth/change-password", {
+        currentPassword,
+        newPassword,
+      });
+      const data = await res.json();
+      
+      if (data.error) {
+        toast({
+          title: "خطأ",
+          description: data.error,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "تم بنجاح",
+          description: data.message,
+        });
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      }
+    } catch (error: any) {
+      toast({
+        title: "خطأ",
+        description: "فشل تغيير كلمة المرور",
+        variant: "destructive",
+      });
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" dir="rtl">
       <Card className="p-6">
         <div className="flex flex-col items-center text-center mb-6">
           <Avatar className="w-20 h-20 mb-3">
@@ -47,42 +192,63 @@ export default function AccountSettings({ user, onChangeUsername, onChangeEmail,
         </div>
 
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <Mail className="w-5 h-5 text-muted-foreground" />
-            <span className="text-sm" dir="ltr">{user.email}</span>
+          <div>
+            <Label className="text-sm text-muted-foreground mb-2 block">اسم المستخدم</Label>
+            <div className="relative">
+              <User className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="pr-10"
+                dir="ltr"
+                data-testid="input-edit-username"
+              />
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Phone className="w-5 h-5 text-muted-foreground" />
-            <span className="text-sm" dir="ltr">{user.phone}</span>
+
+          <div>
+            <Label className="text-sm text-muted-foreground mb-2 block">البريد الإلكتروني</Label>
+            <div className="relative">
+              <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="pr-10"
+                dir="ltr"
+                data-testid="input-edit-email"
+              />
+            </div>
           </div>
-        </div>
 
-        <div className="space-y-3 mt-4">
-          <Button 
-            onClick={onChangeUsername}
-            className="w-full bg-primary"
-            data-testid="button-change-username"
-          >
-            <User className="w-4 h-4 ml-2" />
-            {t('changeUsername')}
-          </Button>
-
-          <Button 
-            onClick={onChangeEmail}
-            className="w-full bg-primary"
-            data-testid="button-change-email"
-          >
-            <Mail className="w-4 h-4 ml-2" />
-            {t('changeEmail')}
-          </Button>
+          <div>
+            <Label className="text-sm text-muted-foreground mb-2 block">رقم الهاتف</Label>
+            <div className="relative">
+              <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="pr-10"
+                dir="ltr"
+                placeholder="+964..."
+                data-testid="input-edit-phone"
+              />
+            </div>
+          </div>
 
           <Button 
-            onClick={onChangePhone}
+            onClick={handleSaveProfile}
             className="w-full bg-primary"
-            data-testid="button-change-phone"
+            disabled={!hasProfileChanges || isUpdating}
+            data-testid="button-save-profile"
           >
-            <Phone className="w-4 h-4 ml-2" />
-            {t('changePhone')}
+            {isUpdating ? (
+              <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4 ml-2" />
+            )}
+            حفظ التغييرات
           </Button>
         </div>
       </Card>
@@ -96,18 +262,47 @@ export default function AccountSettings({ user, onChangeUsername, onChangeEmail,
         <div className="space-y-4">
           <div>
             <Label className="text-sm text-muted-foreground">{t('currentPassword')}</Label>
-            <Input type="password" className="mt-1" data-testid="input-current-password" />
+            <Input 
+              type="password" 
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="mt-1" 
+              dir="ltr"
+              data-testid="input-current-password" 
+            />
           </div>
           <div>
             <Label className="text-sm text-muted-foreground">{t('newPassword')}</Label>
-            <Input type="password" className="mt-1" data-testid="input-new-password" />
+            <Input 
+              type="password" 
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="mt-1" 
+              dir="ltr"
+              data-testid="input-new-password" 
+            />
+          </div>
+          <div>
+            <Label className="text-sm text-muted-foreground">تأكيد كلمة المرور الجديدة</Label>
+            <Input 
+              type="password" 
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="mt-1" 
+              dir="ltr"
+              data-testid="input-confirm-new-password" 
+            />
           </div>
           <Button 
-            onClick={onChangePassword}
+            onClick={handleChangePassword}
             variant="outline" 
             className="w-full"
+            disabled={isChangingPassword}
             data-testid="button-change-password"
           >
+            {isChangingPassword ? (
+              <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+            ) : null}
             تغيير كلمة المرور
           </Button>
         </div>
@@ -122,6 +317,47 @@ export default function AccountSettings({ user, onChangeUsername, onChangeEmail,
         <LogOut className="w-4 h-4 ml-2" />
         {t('logout')}
       </Button>
+
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent dir="rtl">
+          <DialogHeader>
+            <DialogTitle>تأكيد كلمة المرور</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              لتأكيد التغييرات، يرجى إدخال كلمة المرور الحالية
+            </p>
+            <Input
+              type="password"
+              value={confirmPasswordValue}
+              onChange={(e) => setConfirmPasswordValue(e.target.value)}
+              placeholder="كلمة المرور"
+              dir="ltr"
+              data-testid="input-confirm-password-dialog"
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowPasswordDialog(false);
+                setConfirmPasswordValue('');
+              }}
+            >
+              إلغاء
+            </Button>
+            <Button
+              onClick={confirmSaveProfile}
+              disabled={isUpdating || !confirmPasswordValue}
+            >
+              {isUpdating ? (
+                <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+              ) : null}
+              تأكيد
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
