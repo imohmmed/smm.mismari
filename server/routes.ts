@@ -295,6 +295,7 @@ export async function registerRoutes(
         id: user.id,
         username: user.username,
         email: user.email,
+        phone: user.phone,
         balance: user.balance,
         role: user.role,
         discount: user.discount,
