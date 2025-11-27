@@ -48,6 +48,7 @@ export interface IStorage {
   
   cacheServices(services: ServiceWithMarkup[]): void;
   getCachedServices(): ServiceWithMarkup[];
+  clearServicesCache(): void;
   getServiceById(serviceId: number): ServiceWithMarkup | undefined;
   
   getSetting(key: string): Promise<string | null>;
@@ -238,6 +239,11 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
     return this.servicesCache;
+  }
+
+  clearServicesCache(): void {
+    this.servicesCache = [];
+    this.servicesCacheTime = 0;
   }
 
   getServiceById(serviceId: number): ServiceWithMarkup | undefined {

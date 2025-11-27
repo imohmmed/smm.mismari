@@ -1,7 +1,6 @@
 import { type Service, type ServiceWithMarkup } from "@shared/schema";
 
 const API_URL = "https://amazingsmm.com/api/v2";
-const PROFIT_MARGIN = 0.15; // 15% markup
 
 // Platform detection based on service name/category
 function detectPlatform(name: string, category: string): string {
@@ -23,10 +22,10 @@ function detectPlatform(name: string, category: string): string {
   return 'other';
 }
 
-// Apply 15% profit margin to rate
-function applyMarkup(rate: string): number {
+// Apply dynamic profit margin to rate
+function applyMarkup(rate: string, profitMargin: number): number {
   const baseRate = parseFloat(rate);
-  return baseRate * (1 + PROFIT_MARGIN);
+  return baseRate * (1 + profitMargin / 100);
 }
 
 export class AmazingSmmApi {
@@ -60,8 +59,8 @@ export class AmazingSmmApi {
     return response.json();
   }
 
-  // Get all services from Amazing SMM
-  async getServices(): Promise<ServiceWithMarkup[]> {
+  // Get all services from Amazing SMM with dynamic profit margin
+  async getServices(profitMargin: number = 15): Promise<ServiceWithMarkup[]> {
     try {
       const data = await this.request('services');
       
@@ -72,7 +71,7 @@ export class AmazingSmmApi {
 
       return data.map((service: Service) => ({
         ...service,
-        rateWithMarkup: applyMarkup(service.rate),
+        rateWithMarkup: applyMarkup(service.rate, profitMargin),
         platform: detectPlatform(service.name, service.category),
       }));
     } catch (error) {

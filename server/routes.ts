@@ -8,7 +8,11 @@ import { getAmazingSmmApi, createMockServices } from "./amazingSmm";
 import { loginSchema, registerSchema, type User } from "@shared/schema";
 import { z } from "zod";
 
-const PROFIT_MARGIN = 0.15;
+// Helper to get profit margin from database (default 15%)
+async function getProfitMargin(): Promise<number> {
+  const margin = await storage.getSetting("profit_margin");
+  return parseFloat(margin || "15");
+}
 
 declare module "express-session" {
   interface SessionData {
@@ -492,11 +496,12 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Service already added" });
       }
 
+      const profitMargin = await getProfitMargin();
       let services = storage.getCachedServices();
       if (services.length === 0) {
         try {
           const api = getAmazingSmmApi();
-          services = await api.getServices();
+          services = await api.getServices(profitMargin);
           storage.cacheServices(services);
         } catch {
           services = createMockServices();
@@ -594,6 +599,8 @@ export async function registerRoutes(
       }
 
       await storage.setSetting("profit_margin", profitMargin.toString());
+      // Clear the services cache to force refresh with new profit margin
+      storage.clearServicesCache();
       res.json({ success: true, profitMargin });
     } catch (error) {
       console.error("Error updating profit margin:", error);
@@ -604,12 +611,13 @@ export async function registerRoutes(
   app.get("/api/admin/service-lookup/:serviceId", requireAdmin, async (req: Request, res: Response) => {
     try {
       const serviceId = parseInt(req.params.serviceId);
+      const profitMargin = await getProfitMargin();
       
       let services = storage.getCachedServices();
       if (services.length === 0) {
         try {
           const api = getAmazingSmmApi();
-          services = await api.getServices();
+          services = await api.getServices(profitMargin);
           storage.cacheServices(services);
         } catch {
           services = createMockServices();
@@ -642,12 +650,13 @@ export async function registerRoutes(
 
   app.get("/api/services", async (req: Request, res: Response) => {
     try {
+      const profitMargin = await getProfitMargin();
       let services = storage.getCachedServices();
       
       if (services.length === 0) {
         try {
           const api = getAmazingSmmApi();
-          services = await api.getServices();
+          services = await api.getServices(profitMargin);
           if (services.length > 0) {
             storage.cacheServices(services);
           }
@@ -676,12 +685,13 @@ export async function registerRoutes(
   app.get("/api/services/:platform", async (req: Request, res: Response) => {
     try {
       const { platform } = req.params;
+      const profitMargin = await getProfitMargin();
       let services = storage.getCachedServices();
       
       if (services.length === 0) {
         try {
           const api = getAmazingSmmApi();
-          services = await api.getServices();
+          services = await api.getServices(profitMargin);
           storage.cacheServices(services);
         } catch {
           services = createMockServices();
@@ -709,12 +719,13 @@ export async function registerRoutes(
   app.get("/api/service/:id", async (req: Request, res: Response) => {
     try {
       const serviceId = parseInt(req.params.id);
+      const profitMargin = await getProfitMargin();
       let service = storage.getServiceById(serviceId);
       
       if (!service) {
         try {
           const api = getAmazingSmmApi();
-          const services = await api.getServices();
+          const services = await api.getServices(profitMargin);
           storage.cacheServices(services);
           service = storage.getServiceById(serviceId);
         } catch {
@@ -899,12 +910,13 @@ export async function registerRoutes(
 
   app.get("/api/categories", async (req: Request, res: Response) => {
     try {
+      const profitMargin = await getProfitMargin();
       let services = storage.getCachedServices();
       
       if (services.length === 0) {
         try {
           const api = getAmazingSmmApi();
-          services = await api.getServices();
+          services = await api.getServices(profitMargin);
           storage.cacheServices(services);
         } catch {
           services = createMockServices();
@@ -922,6 +934,7 @@ export async function registerRoutes(
 
   app.get("/api/stats", async (req: Request, res: Response) => {
     try {
+      const profitMargin = await getProfitMargin();
       const [usersCount, ordersCount] = await Promise.all([
         storage.countUsers(),
         storage.countOrders(),
@@ -933,7 +946,7 @@ export async function registerRoutes(
       if (services.length === 0) {
         try {
           const api = getAmazingSmmApi();
-          services = await api.getServices();
+          services = await api.getServices(profitMargin);
           if (services.length > 0) {
             storage.cacheServices(services);
           }
