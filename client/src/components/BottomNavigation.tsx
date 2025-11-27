@@ -10,7 +10,7 @@ interface BottomNavigationProps {
 
 export default function BottomNavigation({ activeItem, onItemClick }: BottomNavigationProps) {
   const leftItems: { id: NavItem; icon: typeof User; label: string }[] = [
-    { id: 'home', icon: Home, label: 'الصفحة الرئيسية' },
+    { id: 'home', icon: Home, label: 'الرئيسية' },
     { id: 'addFunds', icon: Wallet, label: 'إضافة الأموال' },
   ];
 
@@ -47,7 +47,7 @@ export default function BottomNavigation({ activeItem, onItemClick }: BottomNavi
 
           <button
             onClick={() => onItemClick('newOrder')}
-            className="flex items-center justify-center w-14 h-14 -mt-8 mx-2 rounded-full bg-success text-success-foreground shadow-lg hover-elevate active-elevate-2 shrink-0"
+            className="flex items-center justify-center w-14 h-14 -mt-8 mx-2 rounded-full bg-primary text-primary-foreground shadow-lg hover-elevate active-elevate-2 shrink-0"
             data-testid="button-new-order"
           >
             <Plus className="w-7 h-7" />
