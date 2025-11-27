@@ -27,61 +27,55 @@ export default function BottomNavigation({ activeItem, onItemClick }: BottomNavi
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 px-3 pb-2 safe-area-bottom">
-      <nav className="bg-card border border-border rounded-2xl shadow-lg relative">
-        <div className="flex items-center justify-between h-16 px-4">
-          <div className="flex items-center gap-2 flex-1">
-            {orderedLeftItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeItem === item.id;
+      <nav className="bg-card border border-border rounded-2xl shadow-lg">
+        <div className="flex items-center justify-center h-16 gap-1">
+          {orderedLeftItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeItem === item.id;
 
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => onItemClick(item.id)}
-                  className={cn(
-                    "flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-lg transition-colors",
-                    isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                  )}
-                  data-testid={`button-nav-${item.id}`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="text-xs font-medium">{item.label}</span>
-                </button>
-              );
-            })}
-          </div>
+            return (
+              <button
+                key={item.id}
+                onClick={() => onItemClick(item.id)}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-0.5 py-1 px-2 rounded-lg transition-colors min-w-[60px]",
+                  isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                )}
+                data-testid={`button-nav-${item.id}`}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-[10px] font-medium whitespace-nowrap">{item.label}</span>
+              </button>
+            );
+          })}
 
-          <div className="flex items-center justify-center flex-1">
-            <button
-              onClick={() => onItemClick('newOrder')}
-              className="flex items-center justify-center w-14 h-14 -mt-8 rounded-full bg-success text-success-foreground shadow-lg hover-elevate active-elevate-2"
-              data-testid="button-new-order"
-            >
-              <Plus className="w-7 h-7" />
-            </button>
-          </div>
+          <button
+            onClick={() => onItemClick('newOrder')}
+            className="flex items-center justify-center w-14 h-14 -mt-8 mx-3 rounded-full bg-success text-success-foreground shadow-lg hover-elevate active-elevate-2"
+            data-testid="button-new-order"
+          >
+            <Plus className="w-7 h-7" />
+          </button>
 
-          <div className="flex items-center gap-2 flex-1 justify-end">
-            {orderedRightItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeItem === item.id;
+          {orderedRightItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeItem === item.id;
 
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => onItemClick(item.id)}
-                  className={cn(
-                    "flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-lg transition-colors",
-                    isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                  )}
-                  data-testid={`button-nav-${item.id}`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="text-xs font-medium">{item.label}</span>
-                </button>
-              );
-            })}
-          </div>
+            return (
+              <button
+                key={item.id}
+                onClick={() => onItemClick(item.id)}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-0.5 py-1 px-2 rounded-lg transition-colors min-w-[60px]",
+                  isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                )}
+                data-testid={`button-nav-${item.id}`}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-[10px] font-medium whitespace-nowrap">{item.label}</span>
+              </button>
+            );
+          })}
         </div>
       </nav>
     </div>
