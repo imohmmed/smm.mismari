@@ -151,11 +151,11 @@ export default function PaymentMethods({ onSubmit }: PaymentMethodsProps) {
           <div className="w-1/4 ml-auto">
             <Input
               type="text"
-              inputMode="decimal"
-              pattern="[0-9.]*"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={amount}
-              onChange={(e) => setAmount(toEnglishNumbers(e.target.value).replace(/[^\d.]/g, ''))}
-              placeholder="10.00"
+              onChange={(e) => setAmount(toEnglishNumbers(e.target.value).replace(/[^\d]/g, ''))}
+              placeholder="10"
               className="text-lg text-left"
               dir="ltr"
               data-testid="input-amount"
