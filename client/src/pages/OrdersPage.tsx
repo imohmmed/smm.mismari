@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import OrdersFilter from '@/components/OrdersFilter';
 import OrderCard from '@/components/OrderCard';
 import EmptyState from '@/components/EmptyState';
@@ -13,11 +13,10 @@ interface OrdersPageProps {
 }
 
 export default function OrdersPage({ onNavigate }: OrdersPageProps) {
-  const { t } = useLanguage();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  // Fetch orders from API
   const { data: ordersData, isLoading } = useQuery({
     queryKey: ['/api/orders'],
     queryFn: fetchOrders,
@@ -25,22 +24,19 @@ export default function OrdersPage({ onNavigate }: OrdersPageProps) {
 
   const orders = ordersData?.orders || [];
 
-  // Filter orders
   const filteredOrders = orders.filter(order => {
     const matchesSearch = !searchQuery || 
-      order.serviceName.includes(searchQuery) || 
+      order.serviceName.toLowerCase().includes(searchQuery.toLowerCase()) || 
       order.orderId.toString().includes(searchQuery);
     const matchesStatus = statusFilter === 'all' || mapOrderStatus(order.status) === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  // Format date for display
   const formatDate = () => {
     const now = new Date();
     return `${now.getDate().toString().padStart(2, '0')}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getFullYear()}`;
   };
 
-  // Detect platform from service name
   const detectPlatform = (name: string): string => {
     const text = name.toLowerCase();
     if (text.includes('instagram') || text.includes('انستجرام')) return 'instagram';
@@ -60,28 +56,24 @@ export default function OrdersPage({ onNavigate }: OrdersPageProps) {
     );
   }
 
-  if (orders.length === 0) {
-    return (
-      <Card>
-        <EmptyState
-          type="orders"
-          username="imohmmed"
-          onAction={() => onNavigate('newOrder')}
-        />
-      </Card>
-    );
-  }
-
   return (
-    <div className="space-y-4 pb-4">
+    <div className="space-y-4 pb-4" dir="rtl">
       <OrdersFilter
         onSearch={setSearchQuery}
         onFilterChange={setStatusFilter}
       />
 
-      <div className="space-y-3">
-        {filteredOrders.length > 0 ? (
-          filteredOrders.map(order => (
+      {orders.length === 0 ? (
+        <Card>
+          <EmptyState
+            type="orders"
+            username={user?.username}
+            onAction={() => onNavigate('newOrder')}
+          />
+        </Card>
+      ) : filteredOrders.length > 0 ? (
+        <div className="space-y-3">
+          {filteredOrders.map(order => (
             <OrderCard
               key={order.orderId}
               id={order.orderId}
@@ -95,13 +87,13 @@ export default function OrdersPage({ onNavigate }: OrdersPageProps) {
               price={order.charge}
               date={formatDate()}
             />
-          ))
-        ) : (
-          <Card className="p-8 text-center text-muted-foreground">
-            لا توجد نتائج للبحث
-          </Card>
-        )}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <Card className="p-8 text-center text-muted-foreground">
+          لا توجد نتائج للبحث
+        </Card>
+      )}
     </div>
   );
 }
