@@ -33,15 +33,15 @@ const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
 
 async function seedAdminUser() {
   try {
-    const existingAdmin = await storage.getUserByEmail("mohmmed@yahoo");
+    const existingAdmin = await storage.getUserByEmail("it.mohmmed@yahoo.com");
     if (!existingAdmin) {
       await storage.createUser({
         username: "admin",
-        email: "mohmmed@yahoo",
+        email: "it.mohmmed@yahoo.com",
         password: "ZVwas511",
         role: "admin",
       });
-      console.log("Admin user created: mohmmed@yahoo");
+      console.log("Admin user created: it.mohmmed@yahoo.com");
     }
   } catch (error) {
     console.error("Error seeding admin user:", error);
