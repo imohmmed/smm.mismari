@@ -93,7 +93,7 @@ export default function PaymentMethods({ onSubmit }: PaymentMethodsProps) {
 
         <div className="mt-4">
           <Label className="text-sm text-muted-foreground mb-2 block text-right">المبلغ (بالدولار)</Label>
-          <div className="w-1/2 mr-auto">
+          <div className="w-1/4 ml-auto">
             <Input
               type="text"
               inputMode="decimal"
