@@ -239,8 +239,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             </div>
 
             {showSearchResults && searchQuery && (
-              <Card className="absolute top-full left-0 right-0 z-50 mt-1 shadow-lg border max-h-80 overflow-hidden">
-                <ScrollArea className="h-full max-h-80">
+              <Card className="absolute top-full left-0 right-0 z-50 mt-1 shadow-lg border">
+                <div className="max-h-64 overflow-y-auto">
                   {filteredServices.length > 0 ? (
                     <div className="p-2 space-y-1">
                       {filteredServices.slice(0, 20).map(service => (
@@ -280,7 +280,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                       {language === 'ar' ? 'لا توجد نتائج' : 'No results found'}
                     </div>
                   )}
-                </ScrollArea>
+                </div>
               </Card>
             )}
           </div>
