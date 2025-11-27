@@ -54,14 +54,14 @@ export default function PaymentMethods({ onSubmit }: PaymentMethodsProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" dir="rtl">
       <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-4 border-0">
-        <h2 className="text-lg font-semibold mb-2">{t('acceptPayments')}</h2>
-        <p className="text-sm opacity-90">{t('contactPayment')}</p>
+        <h2 className="text-lg font-semibold mb-2 text-right">{t('acceptPayments')}</h2>
+        <p className="text-sm opacity-90 text-right">{t('contactPayment')}</p>
       </Card>
 
       <Card className="p-4">
-        <h3 className="font-semibold mb-4 flex items-center gap-2">
+        <h3 className="font-semibold mb-4 flex items-center gap-2 flex-row-reverse justify-end">
           <CreditCard className="w-5 h-5" />
           {t('paymentMethods')}
         </h3>
@@ -70,6 +70,7 @@ export default function PaymentMethods({ onSubmit }: PaymentMethodsProps) {
           value={selectedMethod} 
           onValueChange={(v) => setSelectedMethod(v as PaymentMethod)}
           className="space-y-3"
+          dir="rtl"
         >
           {methods.map((method) => {
             const Icon = method.icon;
@@ -77,7 +78,7 @@ export default function PaymentMethods({ onSubmit }: PaymentMethodsProps) {
               <div
                 key={method.id}
                 className={cn(
-                  "flex items-center gap-3 p-4 rounded-lg border-2 transition-all cursor-pointer",
+                  "flex items-center gap-3 p-4 rounded-lg border-2 transition-all cursor-pointer flex-row-reverse",
                   selectedMethod === method.id 
                     ? "border-primary bg-primary/5" 
                     : "border-border hover:border-primary/50"
@@ -85,7 +86,7 @@ export default function PaymentMethods({ onSubmit }: PaymentMethodsProps) {
                 onClick={() => setSelectedMethod(method.id)}
               >
                 <RadioGroupItem value={method.id} id={method.id} />
-                <div className="flex-1">
+                <div className="flex-1 text-right">
                   <Label htmlFor={method.id} className="font-medium cursor-pointer">
                     {method.name}
                   </Label>
@@ -97,18 +98,19 @@ export default function PaymentMethods({ onSubmit }: PaymentMethodsProps) {
         </RadioGroup>
 
         <div className="mt-4">
-          <Label className="text-sm text-muted-foreground mb-2 block">المبلغ (بالدولار)</Label>
+          <Label className="text-sm text-muted-foreground mb-2 block text-right">المبلغ (بالدولار)</Label>
           <Input
             type="number"
             min="10"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="10.00"
-            className="text-lg"
+            className="text-lg text-right"
             dir="ltr"
+            inputMode="numeric"
             data-testid="input-amount"
           />
-          <p className="text-xs text-muted-foreground mt-1">{t('minDeposit')}: 10 دولار</p>
+          <p className="text-xs text-muted-foreground mt-1 text-right">{t('minDeposit')}: 10 دولار</p>
         </div>
 
         <Button
@@ -122,31 +124,31 @@ export default function PaymentMethods({ onSubmit }: PaymentMethodsProps) {
       </Card>
 
       <Card className="p-4">
-        <h3 className="font-semibold mb-3">{t('instructions')}</h3>
+        <h3 className="font-semibold mb-3 text-right">{t('instructions')}</h3>
         
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion type="single" collapsible className="w-full" dir="rtl">
           <AccordionItem value="notes">
-            <AccordionTrigger className="text-sm">
-              <div className="flex items-center gap-2">
+            <AccordionTrigger className="text-sm flex-row-reverse">
+              <div className="flex items-center gap-2 flex-row-reverse">
                 <AlertCircle className="w-4 h-4 text-destructive" />
                 {t('importantNotes')}
               </div>
             </AccordionTrigger>
             <AccordionContent>
-              <ul className="space-y-3 text-sm">
-                <li className="flex items-start gap-2">
+              <ul className="space-y-3 text-sm text-right">
+                <li className="flex items-start gap-2 flex-row-reverse">
                   <span className="w-2 h-2 rounded-full bg-destructive mt-1.5 shrink-0" />
                   <span>{t('minDeposit')}: 10 دولار</span>
                 </li>
-                <li className="flex items-start gap-2">
+                <li className="flex items-start gap-2 flex-row-reverse">
                   <span className="w-2 h-2 rounded-full bg-destructive mt-1.5 shrink-0" />
                   <span>{t('paymentNote')}</span>
                 </li>
-                <li className="flex items-start gap-2">
+                <li className="flex items-start gap-2 flex-row-reverse">
                   <span className="w-2 h-2 rounded-full bg-destructive mt-1.5 shrink-0" />
                   <span>{t('cvcNote')}</span>
                 </li>
-                <li className="flex items-start gap-2">
+                <li className="flex items-start gap-2 flex-row-reverse">
                   <CheckCircle2 className="w-4 h-4 text-success mt-0.5 shrink-0" />
                   <span>{t('contactSupport')}</span>
                 </li>
