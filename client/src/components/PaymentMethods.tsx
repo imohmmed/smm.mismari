@@ -127,22 +127,22 @@ export default function PaymentMethods({ onSubmit }: PaymentMethodsProps) {
           {t('importantNotes')}
         </div>
         
-        <ul className="space-y-3 text-sm text-right">
-          <li className="flex items-start gap-2 justify-end">
-            <span>{t('minDeposit')}: 10 دولار</span>
+        <ul className="space-y-3 text-sm">
+          <li className="flex items-start gap-2">
             <span className="w-2 h-2 rounded-full bg-destructive mt-1.5 shrink-0" />
+            <span className="text-left" dir="ltr">{t('minDeposit')}: 10 دولار</span>
           </li>
-          <li className="flex items-start gap-2 justify-end">
-            <span>{t('paymentNote')}</span>
+          <li className="flex items-start gap-2">
             <span className="w-2 h-2 rounded-full bg-destructive mt-1.5 shrink-0" />
+            <span className="text-left" dir="ltr">{t('paymentNote')}</span>
           </li>
-          <li className="flex items-start gap-2 justify-end">
-            <span>{t('cvcNote')}</span>
+          <li className="flex items-start gap-2">
             <span className="w-2 h-2 rounded-full bg-destructive mt-1.5 shrink-0" />
+            <span className="text-left" dir="ltr">{t('cvcNote')}</span>
           </li>
-          <li className="flex items-start gap-2 justify-end">
-            <span>{t('contactSupport')}</span>
+          <li className="flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-success mt-0.5 shrink-0" />
+            <span className="text-left" dir="ltr">{t('contactSupport')}</span>
           </li>
         </ul>
       </Card>
