@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,15 +8,23 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { CreditCard, Smartphone, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { cn, toEnglishNumbers } from '@/lib/utils';
+import { useLocation } from 'wouter';
+import { useToast } from '@/hooks/use-toast';
 
 type PaymentMethod = 'rafidain' | 'zainCash' | 'asiaCash';
 
+const WHATSAPP_NUMBER = '9647766699669';
+const EXCHANGE_RATE = 1400;
+
 interface PaymentMethodsProps {
-  onSubmit: (method: PaymentMethod, amount: number) => void;
+  onSubmit?: (method: PaymentMethod, amount: number) => void;
 }
 
 export default function PaymentMethods({ onSubmit }: PaymentMethodsProps) {
   const { t } = useLanguage();
+  const { user, isAuthenticated } = useAuth();
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('rafidain');
   const [amount, setAmount] = useState('');
 
@@ -40,9 +49,55 @@ export default function PaymentMethods({ onSubmit }: PaymentMethodsProps) {
     },
   ];
 
+  const getMethodName = (methodId: PaymentMethod): string => {
+    switch (methodId) {
+      case 'rafidain':
+        return 'ماستر كارد الرافدين';
+      case 'zainCash':
+        return 'زين كاش';
+      case 'asiaCash':
+        return 'آسيا سيل';
+      default:
+        return methodId;
+    }
+  };
+
   const handleSubmit = () => {
     const amountNum = parseFloat(amount);
-    if (amountNum >= 10) {
+    
+    if (amountNum < 10) {
+      toast({
+        title: 'خطأ',
+        description: 'الحد الأدنى للشحن هو 10 دولار',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!isAuthenticated || !user) {
+      toast({
+        title: 'يجب تسجيل الدخول',
+        description: 'يجب عليك إنشاء حساب أو تسجيل الدخول لإضافة الرصيد',
+        variant: 'destructive',
+      });
+      setLocation('/login');
+      return;
+    }
+
+    const iqd = Math.round(amountNum * EXCHANGE_RATE);
+    const formattedIqd = iqd.toLocaleString('en-US');
+    
+    const message = `السلام عليكم
+أرغب بشحن الموقع بمبلغ ( ${amountNum} دولار )
+طريقة الدفع: ( ${getMethodName(selectedMethod)} )
+اسم مستخدم حسابي: ( ${user.username} )
+سعر التحويل يكون: ( ${formattedIqd} دينار عراقي )`;
+
+    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+    
+    window.open(whatsappUrl, '_blank');
+    
+    if (onSubmit) {
       onSubmit(selectedMethod, amountNum);
     }
   };
