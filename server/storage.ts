@@ -1,98 +1,154 @@
-import { type User, type InsertUser, type Order, type ServiceWithMarkup } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { 
+  type User, 
+  type InsertUser, 
+  type Order,
+  type InsertOrder,
+  type ServiceWithMarkup,
+  type CuratedService,
+  type InsertCuratedService,
+  users,
+  orders,
+  curatedServices
+} from "@shared/schema";
+import { db } from "./db";
+import { eq, like, or, desc } from "drizzle-orm";
+import bcrypt from "bcrypt";
+
+const SALT_ROUNDS = 10;
 
 export interface IStorage {
-  // User operations
   getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  updateUserBalance(id: string, balance: number): Promise<User | undefined>;
+  createUser(user: InsertUser & { role?: string }): Promise<User>;
+  updateUserBalance(id: string, amount: number, operation: 'add' | 'subtract'): Promise<User | undefined>;
+  validatePassword(user: User, password: string): Promise<boolean>;
   
-  // Order operations
+  getAllUsers(): Promise<User[]>;
+  searchUsers(query: string): Promise<User[]>;
+  
   getOrders(userId: string): Promise<Order[]>;
-  addOrder(userId: string, order: Order): Promise<Order>;
-  updateOrderStatus(orderId: number, status: Order['status'], remains?: number): Promise<Order | undefined>;
+  getAllOrders(): Promise<Order[]>;
+  createOrder(order: InsertOrder): Promise<Order>;
+  updateOrderStatus(orderId: number, status: string, apiOrderId?: number, remains?: number): Promise<Order | undefined>;
   
-  // Service cache
+  getCuratedServices(): Promise<CuratedService[]>;
+  addCuratedService(service: InsertCuratedService): Promise<CuratedService>;
+  removeCuratedService(id: number): Promise<boolean>;
+  getCuratedServiceByServiceId(serviceId: number): Promise<CuratedService | undefined>;
+  
   cacheServices(services: ServiceWithMarkup[]): void;
   getCachedServices(): ServiceWithMarkup[];
   getServiceById(serviceId: number): ServiceWithMarkup | undefined;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-  private orders: Map<string, Order[]>;
-  private servicesCache: ServiceWithMarkup[];
-  private servicesCacheTime: number;
-
-  constructor() {
-    this.users = new Map();
-    this.orders = new Map();
-    this.servicesCache = [];
-    this.servicesCacheTime = 0;
-  }
+export class DatabaseStorage implements IStorage {
+  private servicesCache: ServiceWithMarkup[] = [];
+  private servicesCacheTime: number = 0;
 
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { 
-      id,
-      username: insertUser.username,
-      password: insertUser.password,
-      email: insertUser.email ?? null,
-      phone: insertUser.phone ?? null,
-      balance: 0,
-      totalSpent: 0,
-      discount: 0,
-    };
-    this.users.set(id, user);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
-  async updateUserBalance(id: string, balance: number): Promise<User | undefined> {
-    const user = this.users.get(id);
-    if (user) {
-      user.balance = balance;
-      this.users.set(id, user);
-      return user;
-    }
-    return undefined;
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser & { role?: string }): Promise<User> {
+    const hashedPassword = await bcrypt.hash(insertUser.password, SALT_ROUNDS);
+    const [user] = await db.insert(users).values({
+      username: insertUser.username,
+      password: hashedPassword,
+      email: insertUser.email,
+      phone: insertUser.phone,
+      role: insertUser.role || "user",
+    }).returning();
+    return user;
+  }
+
+  async validatePassword(user: User, password: string): Promise<boolean> {
+    return bcrypt.compare(password, user.password);
+  }
+
+  async updateUserBalance(id: string, amount: number, operation: 'add' | 'subtract'): Promise<User | undefined> {
+    const user = await this.getUser(id);
+    if (!user) return undefined;
+    
+    const newBalance = operation === 'add' 
+      ? user.balance + amount 
+      : Math.max(0, user.balance - amount);
+    
+    const [updated] = await db.update(users)
+      .set({ balance: newBalance })
+      .where(eq(users.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async searchUsers(query: string): Promise<User[]> {
+    const searchPattern = `%${query}%`;
+    return db.select().from(users).where(
+      or(
+        like(users.username, searchPattern),
+        like(users.email, searchPattern),
+        like(users.phone, searchPattern)
+      )
+    );
   }
 
   async getOrders(userId: string): Promise<Order[]> {
-    return this.orders.get(userId) || [];
+    return db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
   }
 
-  async addOrder(userId: string, order: Order): Promise<Order> {
-    const userOrders = this.orders.get(userId) || [];
-    userOrders.unshift(order);
-    this.orders.set(userId, userOrders);
-    return order;
+  async getAllOrders(): Promise<Order[]> {
+    return db.select().from(orders).orderBy(desc(orders.createdAt));
   }
 
-  async updateOrderStatus(orderId: number, status: Order['status'], remains?: number): Promise<Order | undefined> {
-    const entries = Array.from(this.orders.entries());
-    for (const [userId, userOrders] of entries) {
-      const orderIndex = userOrders.findIndex((o: Order) => o.orderId === orderId);
-      if (orderIndex !== -1) {
-        userOrders[orderIndex].status = status;
-        if (remains !== undefined) {
-          userOrders[orderIndex].remains = remains;
-        }
-        this.orders.set(userId, userOrders);
-        return userOrders[orderIndex];
-      }
-    }
-    return undefined;
+  async createOrder(order: InsertOrder): Promise<Order> {
+    const [newOrder] = await db.insert(orders).values(order).returning();
+    return newOrder;
+  }
+
+  async updateOrderStatus(orderId: number, status: string, apiOrderId?: number, remains?: number): Promise<Order | undefined> {
+    const updateData: Partial<Order> = { status };
+    if (apiOrderId !== undefined) updateData.apiOrderId = apiOrderId;
+    if (remains !== undefined) updateData.remains = remains;
+    
+    const [updated] = await db.update(orders)
+      .set(updateData)
+      .where(eq(orders.id, orderId))
+      .returning();
+    return updated;
+  }
+
+  async getCuratedServices(): Promise<CuratedService[]> {
+    return db.select().from(curatedServices).where(eq(curatedServices.active, true));
+  }
+
+  async addCuratedService(service: InsertCuratedService): Promise<CuratedService> {
+    const [newService] = await db.insert(curatedServices).values(service).returning();
+    return newService;
+  }
+
+  async removeCuratedService(id: number): Promise<boolean> {
+    const result = await db.delete(curatedServices).where(eq(curatedServices.id, id));
+    return true;
+  }
+
+  async getCuratedServiceByServiceId(serviceId: number): Promise<CuratedService | undefined> {
+    const [service] = await db.select().from(curatedServices).where(eq(curatedServices.serviceId, serviceId));
+    return service;
   }
 
   cacheServices(services: ServiceWithMarkup[]): void {
@@ -101,7 +157,6 @@ export class MemStorage implements IStorage {
   }
 
   getCachedServices(): ServiceWithMarkup[] {
-    // Cache for 5 minutes
     if (Date.now() - this.servicesCacheTime > 5 * 60 * 1000) {
       return [];
     }
@@ -113,4 +168,4 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
