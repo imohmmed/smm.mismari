@@ -1,20 +1,9 @@
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Info, BookOpen, Sparkles, Star, RefreshCw, XCircle, Clock } from 'lucide-react';
+import { Info, BookOpen, Star, RefreshCw, XCircle, Clock } from 'lucide-react';
 
-interface NewService {
-  id: number;
-  name: string;
-  date: string;
-}
-
-interface ServiceInfoTabsProps {
-  newServices?: NewService[];
-}
-
-export default function ServiceInfoTabs({ newServices = [] }: ServiceInfoTabsProps) {
+export default function ServiceInfoTabs() {
   const { t, language, direction } = useLanguage();
 
   const iconMargin = direction === 'rtl' ? 'ml-1' : 'mr-1';
@@ -22,7 +11,7 @@ export default function ServiceInfoTabs({ newServices = [] }: ServiceInfoTabsPro
   return (
     <Card className="overflow-hidden">
       <Tabs defaultValue="info" className="w-full">
-        <TabsList className="w-full grid grid-cols-3 rounded-none bg-muted/50 h-auto p-0">
+        <TabsList className="w-full grid grid-cols-2 rounded-none bg-muted/50 h-auto p-0">
           <TabsTrigger value="info" className="py-3 rounded-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Info className={`w-4 h-4 ${iconMargin}`} />
             {t('serviceInfo')}
@@ -30,15 +19,6 @@ export default function ServiceInfoTabs({ newServices = [] }: ServiceInfoTabsPro
           <TabsTrigger value="read" className="py-3 rounded-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <BookOpen className={`w-4 h-4 ${iconMargin}`} />
             {t('readBeforeOrder')}
-          </TabsTrigger>
-          <TabsTrigger value="new" className="py-3 rounded-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground relative">
-            <Sparkles className={`w-4 h-4 ${iconMargin}`} />
-            {t('newServices')}
-            {newServices.length > 0 && (
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-success text-xs">
-                {newServices.length}
-              </Badge>
-            )}
           </TabsTrigger>
         </TabsList>
 
@@ -132,30 +112,6 @@ export default function ServiceInfoTabs({ newServices = [] }: ServiceInfoTabsPro
                 <p className="text-destructive font-medium">- Ordering for accounts (pornographic, political, extremist, or any content that provokes public opinion) is prohibited</p>
                 <p>- When you place a new order, you agree to the terms and conditions of the site</p>
               </>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="new" className="p-4 m-0">
-          <div dir={direction}>
-            {newServices.length > 0 ? (
-              <div className="space-y-3">
-                {newServices.map(service => (
-                  <Card key={service.id} className="p-3 hover-elevate">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Badge variant="outline" className="mb-1">{service.id}</Badge>
-                        <p className="text-sm font-medium">{service.name}</p>
-                      </div>
-                      <span className="text-xs text-muted-foreground">{service.date}</span>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center text-muted-foreground py-8">
-                {language === 'ar' ? 'لا توجد خدمات مضافة حديثاً' : 'No recently added services'}
-              </p>
             )}
           </div>
         </TabsContent>

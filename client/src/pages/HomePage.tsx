@@ -249,7 +249,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         </Tabs>
       </Card>
 
-      <ServiceInfoTabs newServices={[]} />
+      <ServiceInfoTabs />
     </div>
   );
 }
