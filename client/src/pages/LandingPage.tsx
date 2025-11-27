@@ -217,7 +217,7 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
               animate={{ opacity: 0.9 }}
               transition={{ duration: 0.5, delay: 0.5 }}
             >
-              AlAli SMM هي أرخص لوحة SMM تقدم مجموعة متنوعة من خدمات زيادة المتابعين والإعجابات والمشاهدات.
+              AlAli لخدمات مواقع التواصل هي أرخص لوحة SMM تقدم مجموعة متنوعة من خدمات زيادة المتابعين والإعجابات والمشاهدات.
             </motion.p>
             <motion.div 
               className="flex items-center justify-center gap-2 text-sm"

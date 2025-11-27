@@ -142,7 +142,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         <Card className="p-6 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
           <div className="text-center space-y-4">
             <h2 className="text-xl font-bold">
-              {language === 'ar' ? 'مرحباً بك في AlAli SMM' : 'Welcome to AlAli SMM'}
+              {language === 'ar' ? 'مرحباً بك في AlAli لخدمات مواقع التواصل' : 'Welcome to AlAli SMM'}
             </h2>
             <p className="text-muted-foreground">
               {language === 'ar' 
