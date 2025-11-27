@@ -114,6 +114,28 @@ export async function registerRoutes(
     }
   });
 
+  // Check username availability
+  app.get("/api/auth/check-username/:username", async (req: Request, res: Response) => {
+    try {
+      const { username } = req.params;
+      
+      if (!username || username.length < 3) {
+        return res.json({ available: false, message: "اسم المستخدم يجب أن يكون 3 أحرف على الأقل" });
+      }
+
+      const existingUser = await storage.getUserByUsername(username);
+      
+      if (existingUser) {
+        return res.json({ available: false, message: "اسم المستخدم مستخدم بالفعل" });
+      }
+
+      res.json({ available: true, message: "اسم المستخدم متاح" });
+    } catch (error) {
+      console.error("Username check error:", error);
+      res.status(500).json({ available: false, message: "حدث خطأ" });
+    }
+  });
+
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
       const data = loginSchema.parse(req.body);

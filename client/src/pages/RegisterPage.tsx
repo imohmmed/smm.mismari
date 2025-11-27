@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, User, Phone, Loader2 } from "lucide-react";
+import { Mail, Lock, User, Phone, Loader2, Check, X } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { toEnglishNumbers } from "@/lib/utils";
 
@@ -22,6 +22,49 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  
+  const [usernameStatus, setUsernameStatus] = useState<{
+    checking: boolean;
+    available: boolean | null;
+    message: string;
+  }>({ checking: false, available: null, message: "" });
+
+  const checkUsername = useCallback(async (name: string) => {
+    if (!name || name.length < 3) {
+      setUsernameStatus({ checking: false, available: null, message: "" });
+      return;
+    }
+
+    setUsernameStatus({ checking: true, available: null, message: "" });
+
+    try {
+      const response = await fetch(`/api/auth/check-username/${encodeURIComponent(name)}`);
+      const data = await response.json();
+      setUsernameStatus({
+        checking: false,
+        available: data.available,
+        message: data.message,
+      });
+    } catch (error) {
+      setUsernameStatus({
+        checking: false,
+        available: null,
+        message: "حدث خطأ في التحقق",
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (username.length >= 3) {
+        checkUsername(username);
+      } else {
+        setUsernameStatus({ checking: false, available: null, message: "" });
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [username, checkUsername]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +72,16 @@ export default function RegisterPage() {
     if (password !== confirmPassword) {
       toast({
         title: t("error"),
-        description: "Passwords do not match",
+        description: "كلمات المرور غير متطابقة",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (usernameStatus.available === false) {
+      toast({
+        title: t("error"),
+        description: "اسم المستخدم غير متاح",
         variant: "destructive",
       });
       return;
@@ -82,6 +134,27 @@ export default function RegisterPage() {
                   data-testid="input-username"
                 />
               </div>
+              {/* Username availability status */}
+              {username.length >= 3 && (
+                <div className="flex items-center gap-2 text-sm mt-1" dir="rtl">
+                  {usernameStatus.checking ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                      <span className="text-muted-foreground">جاري التحقق...</span>
+                    </>
+                  ) : usernameStatus.available === true ? (
+                    <>
+                      <Check className="w-4 h-4 text-success" />
+                      <span className="text-success">{usernameStatus.message}</span>
+                    </>
+                  ) : usernameStatus.available === false ? (
+                    <>
+                      <X className="w-4 h-4 text-destructive" />
+                      <span className="text-destructive">{usernameStatus.message}</span>
+                    </>
+                  ) : null}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -162,7 +235,7 @@ export default function RegisterPage() {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading}
+              disabled={isLoading || usernameStatus.available === false}
               data-testid="button-register"
             >
               {isLoading ? (
