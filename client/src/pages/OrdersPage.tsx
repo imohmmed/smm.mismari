@@ -1,49 +1,12 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/contexts/LanguageContext';
 import OrdersFilter from '@/components/OrdersFilter';
 import OrderCard from '@/components/OrderCard';
 import EmptyState from '@/components/EmptyState';
 import { Card } from '@/components/ui/card';
-
-// todo: remove mock functionality - replace with API data
-const mockOrders = [
-  {
-    id: 123456,
-    serviceName: 'مشاهدات فيديو انستجرام',
-    platform: 'instagram',
-    link: 'https://instagram.com/p/xyz',
-    quantity: 10000,
-    startCount: 5000,
-    remains: 2500,
-    status: 'inProgress' as const,
-    price: 0.0150,
-    date: '27-11-2025'
-  },
-  {
-    id: 123455,
-    serviceName: 'متابعين تيك توك',
-    platform: 'tiktok',
-    link: 'https://tiktok.com/@user',
-    quantity: 5000,
-    status: 'completed' as const,
-    price: 0.0250,
-    date: '26-11-2025'
-  },
-  {
-    id: 123454,
-    serviceName: 'لايكات يوتيوب',
-    platform: 'youtube',
-    link: 'https://youtube.com/watch?v=xyz',
-    quantity: 1000,
-    status: 'pending' as const,
-    price: 0.0080,
-    date: '25-11-2025'
-  }
-];
-
-// todo: remove mock functionality - use real user data
-const mockUsername = 'imohmmed';
-const hasOrders = true; // toggle to test empty state
+import { Loader2 } from 'lucide-react';
+import { fetchOrders, mapOrderStatus, type Order } from '@/lib/api';
 
 interface OrdersPageProps {
   onNavigate: (page: string) => void;
@@ -54,20 +17,55 @@ export default function OrdersPage({ onNavigate }: OrdersPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const filteredOrders = mockOrders.filter(order => {
+  // Fetch orders from API
+  const { data: ordersData, isLoading } = useQuery({
+    queryKey: ['/api/orders'],
+    queryFn: fetchOrders,
+  });
+
+  const orders = ordersData?.orders || [];
+
+  // Filter orders
+  const filteredOrders = orders.filter(order => {
     const matchesSearch = !searchQuery || 
       order.serviceName.includes(searchQuery) || 
-      order.id.toString().includes(searchQuery);
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
+      order.orderId.toString().includes(searchQuery);
+    const matchesStatus = statusFilter === 'all' || mapOrderStatus(order.status) === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  if (!hasOrders) {
+  // Format date for display
+  const formatDate = () => {
+    const now = new Date();
+    return `${now.getDate().toString().padStart(2, '0')}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getFullYear()}`;
+  };
+
+  // Detect platform from service name
+  const detectPlatform = (name: string): string => {
+    const text = name.toLowerCase();
+    if (text.includes('instagram') || text.includes('انستجرام')) return 'instagram';
+    if (text.includes('youtube') || text.includes('يوتيوب')) return 'youtube';
+    if (text.includes('tiktok') || text.includes('تيك توك')) return 'tiktok';
+    if (text.includes('facebook') || text.includes('فيسبوك')) return 'facebook';
+    if (text.includes('twitter') || text.includes('تويتر')) return 'twitter';
+    if (text.includes('telegram') || text.includes('تليجرام')) return 'telegram';
+    return 'instagram';
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (orders.length === 0) {
     return (
       <Card>
         <EmptyState
           type="orders"
-          username={mockUsername}
+          username="imohmmed"
           onAction={() => onNavigate('newOrder')}
         />
       </Card>
@@ -85,8 +83,17 @@ export default function OrdersPage({ onNavigate }: OrdersPageProps) {
         {filteredOrders.length > 0 ? (
           filteredOrders.map(order => (
             <OrderCard
-              key={order.id}
-              {...order}
+              key={order.orderId}
+              id={order.orderId}
+              serviceName={order.serviceName}
+              platform={detectPlatform(order.serviceName)}
+              link={order.link}
+              quantity={order.quantity}
+              startCount={order.startCount}
+              remains={order.remains}
+              status={mapOrderStatus(order.status)}
+              price={order.charge}
+              date={formatDate()}
             />
           ))
         ) : (

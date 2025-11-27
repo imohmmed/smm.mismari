@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -15,17 +16,21 @@ import SupportPage from '@/pages/SupportPage';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Moon, Sun, Globe } from 'lucide-react';
+import { fetchBalance } from '@/lib/api';
 
 type NavItem = 'account' | 'orders' | 'newOrder' | 'addFunds' | 'support';
-
-// todo: remove mock functionality - replace with API data
-const mockBalance = 0;
 
 function AppContent() {
   const { t, language, setLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const [activeNav, setActiveNav] = useState<NavItem>('newOrder');
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Fetch balance from API
+  const { data: balanceData } = useQuery({
+    queryKey: ['/api/balance'],
+    queryFn: fetchBalance,
+  });
 
   const getPageTitle = () => {
     switch (activeNav) {
@@ -65,7 +70,7 @@ function AppContent() {
     <div className="min-h-screen bg-background flex flex-col">
       <Header
         title={getPageTitle()}
-        balance={mockBalance}
+        balance={balanceData?.balance || 0}
         onMenuClick={() => setMenuOpen(true)}
       />
 

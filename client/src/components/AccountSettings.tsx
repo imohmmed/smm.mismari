@@ -114,9 +114,9 @@ export default function AccountSettings({ user, onChangeEmail, onChangePassword 
           </Badge>
         </button>
 
-        <button
+        <div
+          className="flex items-center justify-between w-full p-4 hover-elevate cursor-pointer"
           onClick={() => setNotifications(!notifications)}
-          className="flex items-center justify-between w-full p-4 hover-elevate"
           data-testid="button-notifications"
         >
           <div className="flex items-center gap-3">
@@ -126,7 +126,7 @@ export default function AccountSettings({ user, onChangeEmail, onChangePassword 
             <span className="font-medium">{t('notifications')}</span>
           </div>
           <Switch checked={notifications} onCheckedChange={setNotifications} />
-        </button>
+        </div>
 
         <button
           onClick={() => console.log('API clicked')}

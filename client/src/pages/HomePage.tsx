@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/contexts/LanguageContext';
 import BalanceCard from '@/components/BalanceCard';
 import PlatformGrid, { type Platform } from '@/components/PlatformGrid';
@@ -8,33 +9,10 @@ import ServiceCard from '@/components/ServiceCard';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { Search, ShoppingCart, ListOrdered, Package } from 'lucide-react';
-
-// todo: remove mock functionality - replace with API data
-const mockServices = [
-  { id: 18193, name: 'مشاهدات فيديو انستجرام - السرعة: 100 الف', price: 0.0015, minQuantity: 100, maxQuantity: 10000000, category: 'مشاهدات', platform: 'instagram' },
-  { id: 18194, name: 'لايكات انستجرام - حقيقي - السرعة: 50 الف', price: 0.002, minQuantity: 50, maxQuantity: 500000, category: 'لايكات', platform: 'instagram' },
-  { id: 18195, name: 'متابعين انستجرام - عرب حقيقي', price: 0.005, minQuantity: 100, maxQuantity: 100000, category: 'متابعين', platform: 'instagram' },
-  { id: 18196, name: 'مشاهدات تيك توك - السرعة: 1 مليون', price: 0.001, minQuantity: 100, maxQuantity: 50000000, category: 'مشاهدات', platform: 'tiktok' },
-  { id: 18197, name: 'لايكات تيك توك - السرعة: 100 الف', price: 0.0018, minQuantity: 50, maxQuantity: 1000000, category: 'لايكات', platform: 'tiktok' },
-  { id: 18198, name: 'مشاهدات يوتيوب - السرعة: 10 الف', price: 0.008, minQuantity: 500, maxQuantity: 1000000, category: 'مشاهدات', platform: 'youtube' },
-];
-
-const mockCategories = ['مشاهدات', 'لايكات', 'متابعين', 'تعليقات', 'مشاركات'];
-
-const mockNewServices = [
-  { id: 18629, name: 'مشاركات تيك توك - السرعة: 100 مليون كل يوم', date: '27-11-2025' },
-  { id: 18628, name: 'تقييمات صفحة فيسبوك - تقييمات مخصصة - ذكور', date: '27-11-2025' },
-];
-
-// todo: remove mock functionality - replace with actual user data
-const mockUser = {
-  username: 'imohmmed',
-  balance: 0,
-  totalSpent: 0,
-  discount: 0,
-  ordersCompleted: 2586580,
-};
+import { useToast } from '@/hooks/use-toast';
+import { Search, ShoppingCart, ListOrdered, Package, Loader2 } from 'lucide-react';
+import { fetchServices, fetchBalance, createOrder, type Service } from '@/lib/api';
+import { queryClient } from '@/lib/queryClient';
 
 interface HomePageProps {
   onNavigate: (page: string) => void;
@@ -42,36 +20,86 @@ interface HomePageProps {
 
 export default function HomePage({ onNavigate }: HomePageProps) {
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null);
   const [activeTab, setActiveTab] = useState('newOrder');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedServiceId, setSelectedServiceId] = useState<number | null>(null);
 
-  const filteredServices = mockServices.filter(service => {
-    const matchesPlatform = !selectedPlatform || selectedPlatform === 'all' || service.platform === selectedPlatform;
-    const matchesSearch = !searchQuery || 
-      service.name.includes(searchQuery) || 
-      service.id.toString().includes(searchQuery);
-    return matchesPlatform && matchesSearch;
+  // Fetch services from API
+  const { data: servicesData, isLoading: servicesLoading } = useQuery({
+    queryKey: ['/api/services', selectedPlatform],
+    queryFn: () => fetchServices(selectedPlatform || undefined),
   });
 
+  // Fetch balance
+  const { data: balanceData } = useQuery({
+    queryKey: ['/api/balance'],
+    queryFn: fetchBalance,
+  });
+
+  // Create order mutation
+  const createOrderMutation = useMutation({
+    mutationFn: createOrder,
+    onSuccess: (data) => {
+      toast({
+        title: 'تم إنشاء الطلب بنجاح',
+        description: `رقم الطلب: ${data.order.orderId}`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/balance'] });
+    },
+    onError: (error) => {
+      toast({
+        title: 'فشل إنشاء الطلب',
+        description: error instanceof Error ? error.message : 'حدث خطأ',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const services = servicesData?.services || [];
+  const categories = servicesData?.categories || [];
+
+  // Filter services based on search
+  const filteredServices = services.filter(service => {
+    const matchesSearch = !searchQuery || 
+      service.name.includes(searchQuery) || 
+      service.service.toString().includes(searchQuery);
+    return matchesSearch;
+  });
+
+  // Transform services for OrderForm component
+  const formServices = filteredServices.map(s => ({
+    id: s.service,
+    name: s.name,
+    price: s.rateWithMarkup,
+    minQuantity: parseInt(s.min),
+    maxQuantity: parseInt(s.max),
+    category: s.category,
+  }));
+
   const handleOrderSubmit = (order: { serviceId: number; link: string; quantity: number; total: number }) => {
-    console.log('Order submitted:', order);
-    // todo: implement API call to submit order
+    createOrderMutation.mutate({
+      serviceId: order.serviceId,
+      link: order.link,
+      quantity: order.quantity,
+    });
   };
 
   const handleBuyService = (serviceId: number) => {
-    console.log('Buy service:', serviceId);
-    // todo: implement service purchase flow
+    setSelectedServiceId(serviceId);
+    setSelectedPlatform('all');
   };
 
   return (
     <div className="pb-4 space-y-4">
       <BalanceCard
-        username={mockUser.username}
-        balance={mockUser.balance}
-        totalSpent={mockUser.totalSpent}
-        discount={mockUser.discount}
-        ordersCompleted={mockUser.ordersCompleted}
+        username="imohmmed"
+        balance={balanceData?.balance || 0}
+        totalSpent={balanceData?.totalSpent || 0}
+        discount={balanceData?.discount || 0}
+        ordersCompleted={2586580}
         level={t('new')}
       />
 
@@ -80,13 +108,15 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           <h2 className="font-semibold flex items-center gap-2">
             {t('selectCategory')}
           </h2>
-          <button
-            onClick={() => setSelectedPlatform(null)}
-            className="text-sm text-primary hover:underline"
-            data-testid="button-clear-filter"
-          >
-            {t('hideFilter')}
-          </button>
+          {selectedPlatform && (
+            <button
+              onClick={() => setSelectedPlatform(null)}
+              className="text-sm text-primary hover:underline"
+              data-testid="button-clear-filter"
+            >
+              {t('hideFilter')}
+            </button>
+          )}
         </div>
         <PlatformGrid
           selectedPlatform={selectedPlatform}
@@ -124,27 +154,37 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           </div>
 
           <TabsContent value="newOrder" className="m-0">
-            {selectedPlatform && selectedPlatform !== 'all' ? (
+            {servicesLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : selectedPlatform && selectedPlatform !== 'all' ? (
               <OrderForm
-                services={filteredServices}
-                categories={mockCategories}
+                services={formServices}
+                categories={categories}
                 onSubmit={handleOrderSubmit}
               />
             ) : (
               <div className="space-y-3">
-                {filteredServices.slice(0, 5).map(service => (
+                {filteredServices.slice(0, 10).map(service => (
                   <ServiceCard
-                    key={service.id}
-                    id={service.id}
+                    key={service.service}
+                    id={service.service}
                     name={service.name}
-                    price={service.price}
-                    minQuantity={service.minQuantity}
-                    maxQuantity={service.maxQuantity}
-                    refill={true}
+                    price={parseFloat(service.rate)}
+                    minQuantity={parseInt(service.min)}
+                    maxQuantity={parseInt(service.max)}
+                    refill={service.refill}
+                    cancel={service.cancel}
                     speed="100K/Day"
-                    onBuy={() => handleBuyService(service.id)}
+                    onBuy={() => handleBuyService(service.service)}
                   />
                 ))}
+                {filteredServices.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    لا توجد خدمات متاحة
+                  </div>
+                )}
               </div>
             )}
           </TabsContent>
@@ -163,7 +203,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         </Tabs>
       </Card>
 
-      <ServiceInfoTabs newServices={mockNewServices} />
+      <ServiceInfoTabs newServices={[]} />
     </div>
   );
 }
