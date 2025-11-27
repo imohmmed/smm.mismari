@@ -64,6 +64,7 @@ export interface BalanceResponse {
   currency: string;
   totalSpent: number;
   discount: number;
+  ordersCompleted: number;
 }
 
 export interface CalculateResponse {

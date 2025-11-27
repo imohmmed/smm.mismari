@@ -135,7 +135,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           balance={balanceData?.balance || user.balance || 0}
           totalSpent={balanceData?.totalSpent || user.totalSpent || 0}
           discount={balanceData?.discount || user.discount || 0}
-          ordersCompleted={0}
+          ordersCompleted={balanceData?.ordersCompleted || 0}
           level={t('new')}
         />
       ) : (

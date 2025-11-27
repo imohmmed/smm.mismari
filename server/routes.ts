@@ -557,6 +557,9 @@ export async function registerRoutes(
         charge,
       });
 
+      // Update total spent for user
+      await storage.updateUserTotalSpent(userId, charge);
+
       if (apiOrderId) {
         await storage.updateOrderStatus(order.id, "Pending", apiOrderId);
       }
@@ -636,11 +639,15 @@ export async function registerRoutes(
         return res.status(404).json({ error: "User not found" });
       }
       
+      // Get completed orders count
+      const ordersCompleted = await storage.getCompletedOrdersCount(req.session.userId!);
+      
       res.json({
         balance: user.balance,
         currency: "USD",
         totalSpent: user.totalSpent,
         discount: user.discount,
+        ordersCompleted,
       });
     } catch (error) {
       console.error("Error fetching balance:", error);

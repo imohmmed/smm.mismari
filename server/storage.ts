@@ -22,6 +22,8 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser & { role?: string }): Promise<User>;
   updateUserBalance(id: string, amount: number, operation: 'add' | 'subtract'): Promise<User | undefined>;
+  updateUserTotalSpent(id: string, amount: number): Promise<User | undefined>;
+  updateUserDiscount(id: string, discount: number): Promise<User | undefined>;
   validatePassword(user: User, password: string): Promise<boolean>;
   
   getAllUsers(): Promise<User[]>;
@@ -33,6 +35,7 @@ export interface IStorage {
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(orderId: number, status: string, apiOrderId?: number, remains?: number): Promise<Order | undefined>;
   countOrders(): Promise<number>;
+  getCompletedOrdersCount(userId: string): Promise<number>;
   
   getCuratedServices(): Promise<CuratedService[]>;
   addCuratedService(service: InsertCuratedService): Promise<CuratedService>;
@@ -94,6 +97,27 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
+  async updateUserTotalSpent(id: string, amount: number): Promise<User | undefined> {
+    const user = await this.getUser(id);
+    if (!user) return undefined;
+    
+    const newTotalSpent = user.totalSpent + amount;
+    
+    const [updated] = await db.update(users)
+      .set({ totalSpent: newTotalSpent })
+      .where(eq(users.id, id))
+      .returning();
+    return updated;
+  }
+
+  async updateUserDiscount(id: string, discount: number): Promise<User | undefined> {
+    const [updated] = await db.update(users)
+      .set({ discount })
+      .where(eq(users.id, id))
+      .returning();
+    return updated;
+  }
+
   async getAllUsers(): Promise<User[]> {
     return db.select().from(users).orderBy(desc(users.createdAt));
   }
@@ -124,6 +148,13 @@ export class DatabaseStorage implements IStorage {
 
   async countOrders(): Promise<number> {
     const [result] = await db.select({ count: count() }).from(orders);
+    return result?.count || 0;
+  }
+
+  async getCompletedOrdersCount(userId: string): Promise<number> {
+    const [result] = await db.select({ count: count() })
+      .from(orders)
+      .where(eq(orders.userId, userId));
     return result?.count || 0;
   }
 
