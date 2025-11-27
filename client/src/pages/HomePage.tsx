@@ -208,12 +208,13 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-            ) : selectedPlatform && selectedPlatform !== 'all' ? (
+            ) : selectedPlatform ? (
               <OrderForm
                 services={formServices}
                 categories={categories}
                 onSubmit={handleOrderSubmit}
                 disabled={!user}
+                showCategorySelect={selectedPlatform === 'all'}
               />
             ) : (
               <div className="space-y-3">

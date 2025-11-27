@@ -48,9 +48,10 @@ interface OrderFormProps {
   categories: string[];
   onSubmit: (order: { serviceId: number; link: string; quantity: number; total: number }) => void;
   disabled?: boolean;
+  showCategorySelect?: boolean;
 }
 
-export default function OrderForm({ services, categories, onSubmit, disabled = false }: OrderFormProps) {
+export default function OrderForm({ services, categories, onSubmit, disabled = false, showCategorySelect = true }: OrderFormProps) {
   const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedService, setSelectedService] = useState<string>('');
@@ -97,19 +98,21 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
       </div>
 
       <div className="space-y-4">
-        <div>
-          <Label className="text-sm text-muted-foreground mb-2 block">{t('category')}</Label>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger data-testid="select-category">
-              <SelectValue placeholder={t('selectCategory')} />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map(cat => (
-                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {showCategorySelect && (
+          <div>
+            <Label className="text-sm text-muted-foreground mb-2 block">{t('category')}</Label>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger data-testid="select-category">
+                <SelectValue placeholder={t('selectCategory')} />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map(cat => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div>
           <Label className="text-sm text-muted-foreground mb-2 block">{t('serviceName')}</Label>
