@@ -143,7 +143,7 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
           />
         </div>
 
-        <div>
+        <div className="w-1/2">
           <Label className="text-sm text-muted-foreground mb-2 block">{t('quantity')}</Label>
           <Input 
             type="text"
