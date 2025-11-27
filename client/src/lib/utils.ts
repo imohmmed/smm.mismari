@@ -16,6 +16,7 @@ export function toEnglishNumbers(str: string): string {
   });
   
   result = result.replace(new RegExp(arabicDecimal, 'g'), '.');
+  result = result.replace(/[،,]/g, '');
   
   return result;
 }
