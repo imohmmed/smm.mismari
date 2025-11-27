@@ -23,14 +23,14 @@ import {
   Check,
   X
 } from "lucide-react";
-import { SiInstagram, SiYoutube, SiFacebook, SiTiktok, SiTwitter, SiTelegram, SiSnapchat } from "react-icons/si";
+import { SiInstagram, SiYoutube, SiFacebook, SiTiktok, SiX, SiTelegram, SiSnapchat } from "react-icons/si";
 
 const platforms = [
   { id: "instagram", name: "Instagram", icon: SiInstagram, color: "#E4405F" },
   { id: "youtube", name: "YouTube", icon: SiYoutube, color: "#FF0000" },
   { id: "facebook", name: "Facebook", icon: SiFacebook, color: "#1877F2" },
   { id: "tiktok", name: "TikTok", icon: SiTiktok, color: "#000000" },
-  { id: "twitter", name: "Twitter", icon: SiTwitter, color: "#1DA1F2" },
+  { id: "twitter", name: "X (Twitter)", icon: SiX, color: "#000000" },
   { id: "telegram", name: "Telegram", icon: SiTelegram, color: "#26A5E4" },
   { id: "snapchat", name: "Snapchat", icon: SiSnapchat, color: "#FFFC00" },
 ];
