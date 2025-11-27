@@ -97,8 +97,8 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
   useEffect(() => {
     if (currentService && quantity) {
       const qty = parseInt(quantity) || 0;
-      const priceWithMarkup = currentService.price * 1.15;
-      setTotal((qty / 1000) * priceWithMarkup);
+      // currentService.price is already rateWithMarkup from the backend
+      setTotal((qty / 1000) * currentService.price);
     } else {
       setTotal(0);
     }
