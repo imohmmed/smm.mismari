@@ -28,7 +28,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null);
+  const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>('all');
   const [activeTab, setActiveTab] = useState('newOrder');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedServiceId, setSelectedServiceId] = useState<number | null>(null);
@@ -173,19 +173,10 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       )}
 
       <Card className="p-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4">
           <h2 className="font-semibold flex items-center gap-2">
             {t('selectCategory')}
           </h2>
-          {selectedPlatform && (
-            <button
-              onClick={() => setSelectedPlatform(null)}
-              className="text-sm text-primary hover:underline"
-              data-testid="button-clear-filter"
-            >
-              {t('hideFilter')}
-            </button>
-          )}
         </div>
         <PlatformGrid
           selectedPlatform={selectedPlatform}
