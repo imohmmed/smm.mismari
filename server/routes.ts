@@ -870,12 +870,26 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Service not found" });
       }
 
-      const charge = (quantity / 1000) * service.rateWithMarkup;
+      let rate = service.rateWithMarkup;
+      let discount = 0;
+      
+      // Apply user discount if logged in
+      if (req.session.userId) {
+        const user = await storage.getUser(req.session.userId);
+        if (user && user.discount > 0) {
+          discount = user.discount;
+          rate = rate * (1 - discount / 100);
+        }
+      }
+
+      const charge = (quantity / 1000) * rate;
       
       res.json({
         serviceId,
         quantity,
-        rate: service.rateWithMarkup,
+        rate: rate,
+        originalRate: service.rateWithMarkup,
+        discount,
         charge: charge.toFixed(4),
         currency: "USD",
       });

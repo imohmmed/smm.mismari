@@ -78,9 +78,10 @@ interface OrderFormProps {
   onSubmit: (order: { serviceId: number; link: string; quantity: number; total: number }) => void;
   disabled?: boolean;
   showCategorySelect?: boolean;
+  userDiscount?: number;
 }
 
-export default function OrderForm({ services, categories, onSubmit, disabled = false, showCategorySelect = true }: OrderFormProps) {
+export default function OrderForm({ services, categories, onSubmit, disabled = false, showCategorySelect = true, userDiscount = 0 }: OrderFormProps) {
   const { t, language } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedService, setSelectedService] = useState<string>('');
@@ -98,11 +99,13 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
     if (currentService && quantity) {
       const qty = parseInt(quantity) || 0;
       // currentService.price is already rateWithMarkup from the backend
-      setTotal((qty / 1000) * currentService.price);
+      // Apply user discount if available
+      const priceAfterDiscount = currentService.price * (1 - userDiscount / 100);
+      setTotal((qty / 1000) * priceAfterDiscount);
     } else {
       setTotal(0);
     }
-  }, [currentService, quantity]);
+  }, [currentService, quantity, userDiscount]);
 
   const handleSubmit = () => {
     if (!currentService || !link || !quantity) return;

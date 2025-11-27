@@ -296,6 +296,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 onSubmit={handleOrderSubmit}
                 disabled={!user}
                 showCategorySelect={false}
+                userDiscount={balanceData?.discount || user?.discount || 0}
               />
             ) : selectedPlatform ? (
               <OrderForm
@@ -304,6 +305,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 onSubmit={handleOrderSubmit}
                 disabled={!user}
                 showCategorySelect={selectedPlatform === 'all'}
+                userDiscount={balanceData?.discount || user?.discount || 0}
               />
             ) : (
               <div className="space-y-3">
