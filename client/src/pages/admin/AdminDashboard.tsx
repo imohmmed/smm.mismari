@@ -10,7 +10,6 @@ import {
   Users, 
   Package, 
   ShoppingCart, 
-  DollarSign,
   LogOut,
   Sun,
   Moon,
@@ -32,10 +31,9 @@ import AdminOrders from "./AdminOrders";
 interface AdminStats {
   users: number;
   orders: number;
-  services: number;
   totalBalance: number;
   totalSpending: number;
-  profit: number;
+  accumulatedProfit: number;
   profitMargin: number;
 }
 
@@ -142,7 +140,7 @@ export default function AdminDashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -166,22 +164,6 @@ export default function AdminDashboard() {
                 <div>
                   <p className="text-2xl font-bold">{stats?.users || 0}</p>
                   <p className="text-xs text-muted-foreground">{t("totalUsers")}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center">
-                  <Package className="w-6 h-6 text-orange-500" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">
-                    {statsLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : stats?.services?.toLocaleString() || 0}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{t("services")}</p>
                 </div>
               </div>
             </CardContent>
@@ -222,14 +204,14 @@ export default function AdminDashboard() {
                   <TrendingUp className="w-6 h-6 text-emerald-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-emerald-500">${stats?.profit?.toFixed(2) || "0.00"}</p>
+                  <p className="text-2xl font-bold text-emerald-500">${stats?.accumulatedProfit?.toFixed(2) || "0.00"}</p>
                   <p className="text-xs text-muted-foreground">الأرباح</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="col-span-2">
+          <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-cyan-500/10 flex items-center justify-center">

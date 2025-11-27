@@ -527,37 +527,19 @@ export async function registerRoutes(
         storage.countOrders(),
       ]);
 
-      let servicesCount = 0;
-      let services = storage.getCachedServices();
-      
-      if (services.length === 0) {
-        try {
-          const api = getAmazingSmmApi();
-          services = await api.getServices();
-          if (services.length > 0) {
-            storage.cacheServices(services);
-          }
-        } catch {
-          services = createMockServices();
-          storage.cacheServices(services);
-        }
-      }
-      servicesCount = services.length;
-
       const users = await storage.getAllUsers();
       const totalBalance = users.reduce((acc, u) => acc + (u.balance || 0), 0);
       const totalSpending = users.reduce((acc, u) => acc + (u.totalSpent || 0), 0);
 
       const profitMargin = parseFloat(await storage.getSetting("profit_margin") || "15");
-      const profit = (totalSpending * profitMargin) / 100;
+      const accumulatedProfit = parseFloat(await storage.getSetting("accumulated_profit") || "0");
 
       res.json({
         users: usersCount,
         orders: ordersCount,
-        services: servicesCount,
         totalBalance,
         totalSpending,
-        profit,
+        accumulatedProfit,
         profitMargin,
       });
     } catch (error) {
@@ -778,6 +760,12 @@ export async function registerRoutes(
 
       // Update total spent for user
       await storage.updateUserTotalSpent(userId, charge);
+
+      // Calculate and add profit to accumulated profits
+      const profitMargin = parseFloat(await storage.getSetting("profit_margin") || "15");
+      const orderProfit = (charge * profitMargin) / 100;
+      const currentAccumulatedProfit = parseFloat(await storage.getSetting("accumulated_profit") || "0");
+      await storage.setSetting("accumulated_profit", (currentAccumulatedProfit + orderProfit).toString());
 
       if (apiOrderId) {
         await storage.updateOrderStatus(order.id, "Pending", apiOrderId);
