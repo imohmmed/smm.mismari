@@ -10,46 +10,48 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import BottomNavigation from '@/components/BottomNavigation';
 import HomePage from '@/pages/HomePage';
+import LandingPage from '@/pages/LandingPage';
 import OrdersPage from '@/pages/OrdersPage';
 import AddFundsPage from '@/pages/AddFundsPage';
 import AccountPage from '@/pages/AccountPage';
-import SupportPage from '@/pages/SupportPage';
 import LoginPage from '@/pages/LoginPage';
 import RegisterPage from '@/pages/RegisterPage';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Moon, Sun, Globe, Loader2, LogIn, UserPlus } from 'lucide-react';
+import { Moon, Sun, Loader2, LogIn, UserPlus } from 'lucide-react';
 
-type NavItem = 'account' | 'orders' | 'newOrder' | 'addFunds' | 'support';
+type NavItem = 'account' | 'orders' | 'newOrder' | 'addFunds' | 'home';
 
 function MainApp() {
-  const { t, language, setLanguage } = useLanguage();
+  const { t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { user, isLoading: authLoading, logout } = useAuth();
-  const [activeNav, setActiveNav] = useState<NavItem>('newOrder');
+  const [activeNav, setActiveNav] = useState<NavItem>('home');
   const [menuOpen, setMenuOpen] = useState(false);
   const [, setLocation] = useLocation();
 
   const getPageTitle = () => {
     switch (activeNav) {
-      case 'newOrder': return t('newOrder');
-      case 'orders': return t('orders');
-      case 'addFunds': return t('addFunds');
-      case 'account': return t('account');
-      case 'support': return t('support');
-      default: return t('home');
+      case 'home': return 'الصفحة الرئيسية';
+      case 'newOrder': return 'طلب جديد';
+      case 'orders': return 'الطلبات';
+      case 'addFunds': return 'إضافة الأموال';
+      case 'account': return 'الحساب';
+      default: return 'الصفحة الرئيسية';
     }
   };
 
   const handleNavigate = (page: string) => {
-    if (page === 'newOrder' || page === 'orders' || page === 'addFunds' || page === 'account' || page === 'support') {
+    if (page === 'newOrder' || page === 'orders' || page === 'addFunds' || page === 'account' || page === 'home') {
       setActiveNav(page as NavItem);
     }
   };
 
   const renderPage = () => {
     switch (activeNav) {
+      case 'home':
+        return <LandingPage onNavigate={handleNavigate} />;
       case 'newOrder':
         return <HomePage onNavigate={handleNavigate} />;
       case 'orders':
@@ -58,10 +60,8 @@ function MainApp() {
         return <AddFundsPage />;
       case 'account':
         return <AccountPage />;
-      case 'support':
-        return <SupportPage />;
       default:
-        return <HomePage onNavigate={handleNavigate} />;
+        return <LandingPage onNavigate={handleNavigate} />;
     }
   };
 
@@ -92,9 +92,9 @@ function MainApp() {
       />
 
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-        <SheetContent side={language === 'ar' ? 'left' : 'right'} className="w-72">
+        <SheetContent side="left" className="w-72">
           <SheetHeader>
-            <SheetTitle className="text-right">{t('account')}</SheetTitle>
+            <SheetTitle className="text-right">الحساب</SheetTitle>
           </SheetHeader>
           <div className="py-6 space-y-4">
             {user ? (
@@ -110,20 +110,8 @@ function MainApp() {
                   onClick={toggleTheme}
                   data-testid="button-theme-menu"
                 >
-                  <span>{language === 'ar' ? 'الوضع الليلي' : 'Dark Mode'}</span>
+                  <span>الوضع الليلي</span>
                   {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between"
-                  onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
-                  data-testid="button-language-menu"
-                >
-                  <span>{language === 'ar' ? 'اللغة' : 'Language'}</span>
-                  <div className="flex items-center gap-2">
-                    <Globe className="w-5 h-5" />
-                    <span>{language === 'ar' ? 'العربية' : 'English'}</span>
-                  </div>
                 </Button>
                 {user.role === 'admin' && (
                   <Button
@@ -135,7 +123,7 @@ function MainApp() {
                     }}
                     data-testid="button-admin-panel"
                   >
-                    {t('adminPanel')}
+                    لوحة التحكم
                   </Button>
                 )}
                 <Button
@@ -147,14 +135,14 @@ function MainApp() {
                   }}
                   data-testid="button-logout"
                 >
-                  {t('logout')}
+                  تسجيل الخروج
                 </Button>
               </>
             ) : (
               <>
                 <div className="p-4 bg-muted rounded-lg text-center">
                   <p className="text-muted-foreground">
-                    {language === 'ar' ? 'قم بتسجيل الدخول للوصول لحسابك' : 'Login to access your account'}
+                    قم بتسجيل الدخول للوصول لحسابك
                   </p>
                 </div>
                 <Button
@@ -167,7 +155,7 @@ function MainApp() {
                   data-testid="button-login-menu"
                 >
                   <LogIn className="w-4 h-4" />
-                  {t('login')}
+                  تسجيل الدخول
                 </Button>
                 <Button
                   variant="outline"
@@ -179,7 +167,7 @@ function MainApp() {
                   data-testid="button-register-menu"
                 >
                   <UserPlus className="w-4 h-4" />
-                  {t('register')}
+                  إنشاء حساب
                 </Button>
                 <Button
                   variant="outline"
@@ -187,20 +175,8 @@ function MainApp() {
                   onClick={toggleTheme}
                   data-testid="button-theme-menu-guest"
                 >
-                  <span>{language === 'ar' ? 'الوضع الليلي' : 'Dark Mode'}</span>
+                  <span>الوضع الليلي</span>
                   {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between"
-                  onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
-                  data-testid="button-language-menu-guest"
-                >
-                  <span>{language === 'ar' ? 'اللغة' : 'Language'}</span>
-                  <div className="flex items-center gap-2">
-                    <Globe className="w-5 h-5" />
-                    <span>{language === 'ar' ? 'العربية' : 'English'}</span>
-                  </div>
                 </Button>
               </>
             )}

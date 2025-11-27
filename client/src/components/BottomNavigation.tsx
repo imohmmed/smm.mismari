@@ -1,8 +1,7 @@
-import { useLanguage } from '@/contexts/LanguageContext';
-import { User, ShoppingBag, Plus, Wallet, MessageCircle } from 'lucide-react';
+import { User, ShoppingBag, Plus, Wallet, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type NavItem = 'account' | 'orders' | 'newOrder' | 'addFunds' | 'support';
+type NavItem = 'account' | 'orders' | 'newOrder' | 'addFunds' | 'home';
 
 interface BottomNavigationProps {
   activeItem: NavItem;
@@ -10,27 +9,22 @@ interface BottomNavigationProps {
 }
 
 export default function BottomNavigation({ activeItem, onItemClick }: BottomNavigationProps) {
-  const { t, direction } = useLanguage();
-
   const leftItems: { id: NavItem; icon: typeof User; label: string }[] = [
-    { id: 'support', icon: MessageCircle, label: t('support') },
-    { id: 'addFunds', icon: Wallet, label: t('addFunds') },
+    { id: 'home', icon: Home, label: 'الصفحة الرئيسية' },
+    { id: 'addFunds', icon: Wallet, label: 'إضافة الأموال' },
   ];
 
   const rightItems: { id: NavItem; icon: typeof User; label: string }[] = [
-    { id: 'orders', icon: ShoppingBag, label: t('orders') },
-    { id: 'account', icon: User, label: t('account') },
+    { id: 'orders', icon: ShoppingBag, label: 'الطلبات' },
+    { id: 'account', icon: User, label: 'الحساب' },
   ];
-
-  const orderedLeftItems = direction === 'ltr' ? rightItems : leftItems;
-  const orderedRightItems = direction === 'ltr' ? leftItems : rightItems;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 px-3 pb-2 safe-area-bottom">
       <nav className="bg-card border border-border rounded-2xl shadow-lg">
         <div className="flex items-center h-16 px-2">
           <div className="flex items-center flex-1 justify-evenly">
-            {orderedLeftItems.map((item) => {
+            {leftItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeItem === item.id;
 
@@ -60,7 +54,7 @@ export default function BottomNavigation({ activeItem, onItemClick }: BottomNavi
           </button>
 
           <div className="flex items-center flex-1 justify-evenly">
-            {orderedRightItems.map((item) => {
+            {rightItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeItem === item.id;
 
