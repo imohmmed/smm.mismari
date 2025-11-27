@@ -78,6 +78,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     minQuantity: parseInt(s.min),
     maxQuantity: parseInt(s.max),
     category: s.category,
+    platform: s.platform,
   }));
 
   const handleOrderSubmit = (order: { serviceId: number; link: string; quantity: number; total: number }) => {

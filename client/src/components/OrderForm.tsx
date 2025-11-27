@@ -20,7 +20,28 @@ interface Service {
   minQuantity: number;
   maxQuantity: number;
   category: string;
+  platform?: string;
 }
+
+const getPlatformPlaceholder = (platform?: string): string => {
+  const placeholders: Record<string, string> = {
+    instagram: 'https://instagram.com/p/...',
+    facebook: 'https://facebook.com/...',
+    youtube: 'https://youtube.com/watch?v=...',
+    tiktok: 'https://tiktok.com/@user/video/...',
+    twitter: 'https://twitter.com/user/status/...',
+    telegram: 'https://t.me/...',
+    snapchat: 'https://snapchat.com/...',
+    discord: 'https://discord.gg/...',
+    linkedin: 'https://linkedin.com/...',
+    spotify: 'https://open.spotify.com/...',
+    twitch: 'https://twitch.tv/...',
+    google: 'https://google.com/...',
+    threads: 'https://threads.net/@...',
+    kwai: 'https://kwai.com/...',
+  };
+  return placeholders[platform?.toLowerCase() || ''] || 'https://...';
+};
 
 interface OrderFormProps {
   services: Service[];
@@ -112,7 +133,7 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
             type="url"
             value={link}
             onChange={(e) => setLink(e.target.value)}
-            placeholder="https://instagram.com/p/..."
+            placeholder={getPlatformPlaceholder(currentService?.platform)}
             className="text-left"
             dir="ltr"
             data-testid="input-link"
