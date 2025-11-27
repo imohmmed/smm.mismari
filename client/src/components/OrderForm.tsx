@@ -26,9 +26,10 @@ interface OrderFormProps {
   services: Service[];
   categories: string[];
   onSubmit: (order: { serviceId: number; link: string; quantity: number; total: number }) => void;
+  disabled?: boolean;
 }
 
-export default function OrderForm({ services, categories, onSubmit }: OrderFormProps) {
+export default function OrderForm({ services, categories, onSubmit, disabled = false }: OrderFormProps) {
   const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedService, setSelectedService] = useState<string>('');
@@ -156,7 +157,7 @@ export default function OrderForm({ services, categories, onSubmit }: OrderFormP
 
         <Button 
           onClick={handleSubmit}
-          disabled={!isValid}
+          disabled={!isValid || disabled}
           className="w-full bg-success hover:bg-success/90 text-success-foreground py-6 text-lg"
           data-testid="button-confirm-order"
         >

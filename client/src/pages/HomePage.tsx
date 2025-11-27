@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import BalanceCard from '@/components/BalanceCard';
 import PlatformGrid, { type Platform } from '@/components/PlatformGrid';
 import OrderForm from '@/components/OrderForm';
@@ -9,50 +10,52 @@ import ServiceCard from '@/components/ServiceCard';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Search, ShoppingCart, ListOrdered, Package, Loader2 } from 'lucide-react';
+import { Search, ShoppingCart, ListOrdered, Package, Loader2, LogIn, UserPlus } from 'lucide-react';
 import { fetchServices, fetchBalance, createOrder, type Service } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
+import { useLocation } from 'wouter';
 
 interface HomePageProps {
   onNavigate: (page: string) => void;
 }
 
 export default function HomePage({ onNavigate }: HomePageProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { user } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null);
   const [activeTab, setActiveTab] = useState('newOrder');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedServiceId, setSelectedServiceId] = useState<number | null>(null);
 
-  // Fetch services from API
   const { data: servicesData, isLoading: servicesLoading } = useQuery({
     queryKey: ['/api/services', selectedPlatform],
     queryFn: () => fetchServices(selectedPlatform || undefined),
   });
 
-  // Fetch balance
   const { data: balanceData } = useQuery({
     queryKey: ['/api/balance'],
     queryFn: fetchBalance,
+    enabled: !!user,
   });
 
-  // Create order mutation
   const createOrderMutation = useMutation({
     mutationFn: createOrder,
     onSuccess: (data) => {
       toast({
-        title: 'تم إنشاء الطلب بنجاح',
-        description: `رقم الطلب: ${data.order.orderId}`,
+        title: language === 'ar' ? 'تم إنشاء الطلب بنجاح' : 'Order created successfully',
+        description: `${language === 'ar' ? 'رقم الطلب' : 'Order ID'}: ${data.order.orderId}`,
       });
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/balance'] });
     },
     onError: (error) => {
       toast({
-        title: 'فشل إنشاء الطلب',
-        description: error instanceof Error ? error.message : 'حدث خطأ',
+        title: language === 'ar' ? 'فشل إنشاء الطلب' : 'Failed to create order',
+        description: error instanceof Error ? error.message : (language === 'ar' ? 'حدث خطأ' : 'An error occurred'),
         variant: 'destructive',
       });
     },
@@ -61,7 +64,6 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const services = servicesData?.services || [];
   const categories = servicesData?.categories || [];
 
-  // Filter services based on search
   const filteredServices = services.filter(service => {
     const matchesSearch = !searchQuery || 
       service.name.includes(searchQuery) || 
@@ -69,7 +71,6 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     return matchesSearch;
   });
 
-  // Transform services for OrderForm component
   const formServices = filteredServices.map(s => ({
     id: s.service,
     name: s.name,
@@ -80,6 +81,15 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   }));
 
   const handleOrderSubmit = (order: { serviceId: number; link: string; quantity: number; total: number }) => {
+    if (!user) {
+      toast({
+        title: language === 'ar' ? 'يرجى تسجيل الدخول' : 'Please login',
+        description: language === 'ar' ? 'يجب تسجيل الدخول لإتمام الطلب' : 'You must login to place an order',
+        variant: 'destructive',
+      });
+      setLocation('/login');
+      return;
+    }
     createOrderMutation.mutate({
       serviceId: order.serviceId,
       link: order.link,
@@ -88,20 +98,63 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   };
 
   const handleBuyService = (serviceId: number) => {
+    if (!user) {
+      toast({
+        title: language === 'ar' ? 'يرجى تسجيل الدخول' : 'Please login',
+        description: language === 'ar' ? 'يجب تسجيل الدخول لإتمام الطلب' : 'You must login to place an order',
+        variant: 'destructive',
+      });
+      setLocation('/login');
+      return;
+    }
     setSelectedServiceId(serviceId);
     setSelectedPlatform('all');
   };
 
   return (
     <div className="pb-4 space-y-4">
-      <BalanceCard
-        username="imohmmed"
-        balance={balanceData?.balance || 0}
-        totalSpent={balanceData?.totalSpent || 0}
-        discount={balanceData?.discount || 0}
-        ordersCompleted={2586580}
-        level={t('new')}
-      />
+      {user ? (
+        <BalanceCard
+          username={user.username}
+          balance={balanceData?.balance || user.balance || 0}
+          totalSpent={balanceData?.totalSpent || user.totalSpent || 0}
+          discount={balanceData?.discount || user.discount || 0}
+          ordersCompleted={0}
+          level={t('new')}
+        />
+      ) : (
+        <Card className="p-6 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+          <div className="text-center space-y-4">
+            <h2 className="text-xl font-bold">
+              {language === 'ar' ? 'مرحباً بك في SMM Panel' : 'Welcome to SMM Panel'}
+            </h2>
+            <p className="text-muted-foreground">
+              {language === 'ar' 
+                ? 'قم بتسجيل الدخول أو إنشاء حساب للبدء في طلب خدمات السوشيال ميديا'
+                : 'Login or create an account to start ordering social media services'}
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button
+                onClick={() => setLocation('/login')}
+                className="gap-2"
+                data-testid="button-login-hero"
+              >
+                <LogIn className="w-4 h-4" />
+                {t('login')}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setLocation('/register')}
+                className="gap-2"
+                data-testid="button-register-hero"
+              >
+                <UserPlus className="w-4 h-4" />
+                {t('register')}
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
 
       <Card className="p-4">
         <div className="flex items-center justify-between mb-4">
@@ -163,6 +216,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 services={formServices}
                 categories={categories}
                 onSubmit={handleOrderSubmit}
+                disabled={!user}
               />
             ) : (
               <div className="space-y-3">
@@ -182,7 +236,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 ))}
                 {filteredServices.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
-                    لا توجد خدمات متاحة
+                    {language === 'ar' ? 'لا توجد خدمات متاحة' : 'No services available'}
                   </div>
                 )}
               </div>
@@ -191,13 +245,13 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
           <TabsContent value="subscriptions" className="m-0">
             <div className="text-center py-8 text-muted-foreground">
-              قريباً - خدمة الاشتراكات
+              {language === 'ar' ? 'قريباً - خدمة الاشتراكات' : 'Coming soon - Subscriptions'}
             </div>
           </TabsContent>
 
           <TabsContent value="bulkOrder" className="m-0">
             <div className="text-center py-8 text-muted-foreground">
-              قريباً - الطلب المجمع
+              {language === 'ar' ? 'قريباً - الطلب المجمع' : 'Coming soon - Bulk Order'}
             </div>
           </TabsContent>
         </Tabs>
