@@ -43,6 +43,34 @@ const getPlatformPlaceholder = (platform?: string): string => {
   return placeholders[platform?.toLowerCase() || ''] || 'https://...';
 };
 
+const extractExecutionTime = (serviceName: string, language: string): string => {
+  const arabicPatterns = [
+    /وقت البدأ[:\s]*([^~\-]+)/i,
+    /وقت البدء[:\s]*([^~\-]+)/i,
+    /البدأ[:\s]*([^~\-]+)/i,
+  ];
+  
+  const englishPatterns = [
+    /start time[:\s]*([^~\-]+)/i,
+    /time[:\s]*([^~\-]+)/i,
+  ];
+  
+  const patterns = language === 'ar' ? [...arabicPatterns, ...englishPatterns] : [...englishPatterns, ...arabicPatterns];
+  
+  for (const pattern of patterns) {
+    const match = serviceName.match(pattern);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+  }
+  
+  if (serviceName.includes('فوري') || serviceName.toLowerCase().includes('instant')) {
+    return language === 'ar' ? 'فوري' : 'Instant';
+  }
+  
+  return language === 'ar' ? '0-1 ساعة' : '0-1 hour';
+};
+
 interface OrderFormProps {
   services: Service[];
   categories: string[];
@@ -52,7 +80,7 @@ interface OrderFormProps {
 }
 
 export default function OrderForm({ services, categories, onSubmit, disabled = false, showCategorySelect = true }: OrderFormProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedService, setSelectedService] = useState<string>('');
   const [link, setLink] = useState('');
@@ -176,7 +204,9 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
               <Clock className="w-4 h-4" />
               <span className="text-xs">{t('executionTime')}</span>
             </div>
-            <p className="font-semibold">0-1 {t('startTime')}</p>
+            <p className="font-semibold">
+              {currentService ? extractExecutionTime(currentService.name, language) : (language === 'ar' ? '0-1 ساعة' : '0-1 hour')}
+            </p>
           </Card>
 
           <Card className="p-3 bg-muted/50">
