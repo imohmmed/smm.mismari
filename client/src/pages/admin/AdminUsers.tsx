@@ -36,7 +36,8 @@ import {
   Loader2,
   Trash2,
   Shield,
-  ShieldOff
+  ShieldOff,
+  Percent
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -61,8 +62,10 @@ export default function AdminUsers() {
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [userActionsOpen, setUserActionsOpen] = useState(false);
   const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
+  const [discountDialogOpen, setDiscountDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [balanceAmount, setBalanceAmount] = useState("");
+  const [discountAmount, setDiscountAmount] = useState("");
   const [balanceOperation, setBalanceOperation] = useState<"add" | "subtract">("add");
 
   const { data, isLoading } = useQuery({
@@ -129,6 +132,24 @@ export default function AdminUsers() {
     },
   });
 
+  const discountMutation = useMutation({
+    mutationFn: async ({ userId, discount }: { userId: string; discount: number }) => {
+      const res = await apiRequest("POST", `/api/admin/users/${userId}/discount`, { discount });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "تم تحديث الخصم" });
+      setDiscountDialogOpen(false);
+      setUserActionsOpen(false);
+      setSelectedUser(null);
+      setDiscountAmount("");
+    },
+    onError: (error: any) => {
+      toast({ title: "خطأ", description: error.message, variant: "destructive" });
+    },
+  });
+
   const handleBalanceUpdate = () => {
     if (!selectedUser || !balanceAmount) return;
     
@@ -149,6 +170,26 @@ export default function AdminUsers() {
     setBalanceOperation(operation);
     setBalanceAmount("");
     setBalanceDialogOpen(true);
+  };
+
+  const openDiscountDialog = () => {
+    setDiscountAmount(selectedUser?.discount?.toString() || "0");
+    setDiscountDialogOpen(true);
+  };
+
+  const handleDiscountUpdate = () => {
+    if (!selectedUser) return;
+    
+    const discount = parseFloat(discountAmount);
+    if (isNaN(discount) || discount < 0 || discount > 100) {
+      toast({ title: "خطأ", description: "نسبة الخصم يجب أن تكون بين 0 و 100", variant: "destructive" });
+      return;
+    }
+
+    discountMutation.mutate({
+      userId: selectedUser.id,
+      discount,
+    });
   };
 
   const handleUserClick = (user: UserData) => {
@@ -249,9 +290,16 @@ export default function AdminUsers() {
               <div className="p-4 bg-muted rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-semibold">{selectedUser.username}</span>
-                  {selectedUser.role === "admin" && (
-                    <Badge className="bg-primary">Admin</Badge>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {selectedUser.discount > 0 && (
+                      <Badge className="bg-orange-500 text-white">
+                        خصم {selectedUser.discount}%
+                      </Badge>
+                    )}
+                    {selectedUser.role === "admin" && (
+                      <Badge className="bg-primary">Admin</Badge>
+                    )}
+                  </div>
                 </div>
                 <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
                 <p className="text-lg font-bold text-green-500 mt-2">
@@ -281,6 +329,16 @@ export default function AdminUsers() {
                   خصم رصيد
                 </Button>
               </div>
+
+              <Button
+                variant="secondary"
+                onClick={openDiscountDialog}
+                className="w-full gap-2 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400"
+                data-testid="button-set-discount"
+              >
+                <Percent className="w-4 h-4" />
+                تعديل الخصم ({selectedUser.discount}%)
+              </Button>
 
               <div className="grid grid-cols-2 gap-2">
                 {selectedUser.role === "admin" ? (
@@ -379,6 +437,69 @@ export default function AdminUsers() {
                   data-testid="button-confirm-balance"
                 >
                   {balanceMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    t("confirm")
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={discountDialogOpen} onOpenChange={setDiscountDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>تعديل الخصم</DialogTitle>
+          </DialogHeader>
+          
+          {selectedUser && (
+            <div className="space-y-4">
+              <div className="p-4 bg-muted rounded-lg">
+                <p className="font-semibold">{selectedUser.username}</p>
+                <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                <p className="text-lg font-bold text-orange-500 mt-2">
+                  الخصم الحالي: {selectedUser.discount}%
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>نسبة الخصم (%)</Label>
+                <div className="relative">
+                  <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    type="number"
+                    step="1"
+                    min="0"
+                    max="100"
+                    value={discountAmount}
+                    onChange={(e) => setDiscountAmount(e.target.value)}
+                    className="pl-10"
+                    placeholder="0"
+                    data-testid="input-discount-amount"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  سيتم خصم هذه النسبة من سعر كل طلب للمستخدم
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setDiscountDialogOpen(false)}
+                >
+                  {t("cancel")}
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={handleDiscountUpdate}
+                  disabled={discountMutation.isPending}
+                  data-testid="button-confirm-discount"
+                >
+                  {discountMutation.isPending ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     t("confirm")

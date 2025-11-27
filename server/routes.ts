@@ -442,6 +442,33 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/admin/users/:id/discount", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { discount } = req.body;
+      
+      if (typeof discount !== "number" || discount < 0 || discount > 100) {
+        return res.status(400).json({ error: "Invalid discount (0-100)" });
+      }
+
+      const user = await storage.updateUserDiscount(req.params.id, discount);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json({
+        success: true,
+        user: {
+          id: user.id,
+          username: user.username,
+          discount: user.discount,
+        },
+      });
+    } catch (error) {
+      console.error("Error updating discount:", error);
+      res.status(500).json({ error: "Failed to update discount" });
+    }
+  });
+
   app.get("/api/admin/services", requireAdmin, async (req: Request, res: Response) => {
     try {
       const curatedServices = await storage.getCuratedServices();
@@ -726,10 +753,18 @@ export async function registerRoutes(
         });
       }
 
-      const charge = (quantity / 1000) * service.rateWithMarkup;
-
       const user = await storage.getUser(userId);
-      if (!user || user.balance < charge) {
+      if (!user) {
+        return res.status(400).json({ error: "User not found" });
+      }
+
+      // Calculate charge with user discount applied
+      const baseCharge = (quantity / 1000) * service.rateWithMarkup;
+      const userDiscount = user.discount || 0;
+      const discountAmount = (baseCharge * userDiscount) / 100;
+      const charge = baseCharge - discountAmount;
+
+      if (user.balance < charge) {
         return res.status(400).json({ error: "Insufficient balance" });
       }
 

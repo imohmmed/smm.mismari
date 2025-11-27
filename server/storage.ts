@@ -56,6 +56,7 @@ export interface IStorage {
   
   updateUserRole(id: string, role: string): Promise<User | undefined>;
   deleteUser(id: string): Promise<boolean>;
+  updateUserDiscount(id: string, discount: number): Promise<User | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
