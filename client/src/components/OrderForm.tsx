@@ -120,10 +120,19 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
             <SelectTrigger data-testid="select-service">
               <SelectValue placeholder={t('serviceName')} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-h-80 w-[calc(100vw-3rem)] max-w-md" dir="rtl">
               {filteredServices.map(service => (
-                <SelectItem key={service.id} value={service.id.toString()}>
-                  {service.id} - {service.name}
+                <SelectItem 
+                  key={service.id} 
+                  value={service.id.toString()}
+                  className="flex-row-reverse text-right"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-xs font-mono shrink-0">
+                      {service.id}
+                    </span>
+                    <span className="text-sm leading-relaxed">{service.name}</span>
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
