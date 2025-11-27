@@ -119,28 +119,28 @@ export default function PaymentMethods({ onSubmit }: PaymentMethodsProps) {
         </Button>
       </Card>
 
-      <Card className="p-4" dir="ltr">
-        <h3 className="font-semibold mb-3 text-left">{t('instructions')}</h3>
+      <Card className="p-4" dir="rtl">
+        <h3 className="font-semibold mb-3 text-right">{t('instructions')}</h3>
         
-        <div className="flex items-center gap-2 mb-3 text-sm font-medium">
+        <div className="flex items-center gap-2 mb-3 text-sm font-medium flex-row-reverse justify-end">
           <AlertCircle className="w-4 h-4 text-destructive" />
           {t('importantNotes')}
         </div>
         
-        <ul className="space-y-3 text-sm text-left">
-          <li className="flex items-start gap-2">
+        <ul className="space-y-3 text-sm text-right">
+          <li className="flex items-start gap-2 flex-row-reverse">
             <span className="w-2 h-2 rounded-full bg-destructive mt-1.5 shrink-0" />
             <span>{t('minDeposit')}: 10 دولار</span>
           </li>
-          <li className="flex items-start gap-2">
+          <li className="flex items-start gap-2 flex-row-reverse">
             <span className="w-2 h-2 rounded-full bg-destructive mt-1.5 shrink-0" />
             <span>{t('paymentNote')}</span>
           </li>
-          <li className="flex items-start gap-2">
+          <li className="flex items-start gap-2 flex-row-reverse">
             <span className="w-2 h-2 rounded-full bg-destructive mt-1.5 shrink-0" />
             <span>{t('cvcNote')}</span>
           </li>
-          <li className="flex items-start gap-2">
+          <li className="flex items-start gap-2 flex-row-reverse">
             <CheckCircle2 className="w-4 h-4 text-success mt-0.5 shrink-0" />
             <span>{t('contactSupport')}</span>
           </li>
