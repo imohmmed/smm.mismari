@@ -649,5 +649,41 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/stats", async (req: Request, res: Response) => {
+    try {
+      const [usersCount, ordersCount] = await Promise.all([
+        storage.countUsers(),
+        storage.countOrders(),
+      ]);
+
+      let servicesCount = 0;
+      let services = storage.getCachedServices();
+      
+      if (services.length === 0) {
+        try {
+          const api = getAmazingSmmApi();
+          services = await api.getServices();
+          if (services.length > 0) {
+            storage.cacheServices(services);
+          }
+        } catch {
+          services = createMockServices();
+          storage.cacheServices(services);
+        }
+      }
+      
+      servicesCount = services.length;
+
+      res.json({
+        users: usersCount,
+        orders: ordersCount,
+        services: servicesCount,
+      });
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+      res.status(500).json({ error: "Failed to fetch stats" });
+    }
+  });
+
   return httpServer;
 }

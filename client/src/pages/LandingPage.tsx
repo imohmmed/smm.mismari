@@ -53,9 +53,9 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
   });
 
   const stats = {
-    orders: statsData?.orders || 125847,
-    users: statsData?.users || 5420,
-    services: statsData?.services || 1250
+    orders: statsData?.orders ?? 0,
+    users: statsData?.users ?? 0,
+    services: statsData?.services ?? 0
   };
 
   const platforms = [

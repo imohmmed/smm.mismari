@@ -11,7 +11,7 @@ import {
   curatedServices
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, like, or, desc } from "drizzle-orm";
+import { eq, like, or, desc, count } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 const SALT_ROUNDS = 10;
@@ -26,11 +26,13 @@ export interface IStorage {
   
   getAllUsers(): Promise<User[]>;
   searchUsers(query: string): Promise<User[]>;
+  countUsers(): Promise<number>;
   
   getOrders(userId: string): Promise<Order[]>;
   getAllOrders(): Promise<Order[]>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(orderId: number, status: string, apiOrderId?: number, remains?: number): Promise<Order | undefined>;
+  countOrders(): Promise<number>;
   
   getCuratedServices(): Promise<CuratedService[]>;
   addCuratedService(service: InsertCuratedService): Promise<CuratedService>;
@@ -107,12 +109,22 @@ export class DatabaseStorage implements IStorage {
     );
   }
 
+  async countUsers(): Promise<number> {
+    const [result] = await db.select({ count: count() }).from(users);
+    return result?.count || 0;
+  }
+
   async getOrders(userId: string): Promise<Order[]> {
     return db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
   }
 
   async getAllOrders(): Promise<Order[]> {
     return db.select().from(orders).orderBy(desc(orders.createdAt));
+  }
+
+  async countOrders(): Promise<number> {
+    const [result] = await db.select({ count: count() }).from(orders);
+    return result?.count || 0;
   }
 
   async createOrder(order: InsertOrder): Promise<Order> {
