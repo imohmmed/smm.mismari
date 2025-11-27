@@ -14,7 +14,7 @@ import {
 import { CreditCard, Smartphone, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type PaymentMethod = 'mastercard' | 'zainCash' | 'asiaCash';
+type PaymentMethod = 'rafidain' | 'zainCash' | 'asiaCash';
 
 interface PaymentMethodsProps {
   onSubmit: (method: PaymentMethod, amount: number) => void;
@@ -22,15 +22,15 @@ interface PaymentMethodsProps {
 
 export default function PaymentMethods({ onSubmit }: PaymentMethodsProps) {
   const { t } = useLanguage();
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('mastercard');
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('rafidain');
   const [amount, setAmount] = useState('');
 
   const methods: { id: PaymentMethod; name: string; icon: typeof CreditCard; description: string }[] = [
     { 
-      id: 'mastercard', 
-      name: 'فيزا - ماستر كارد - جوجل باي - ابل باي [5% بونص اذا اودعت 10$]', 
+      id: 'rafidain', 
+      name: 'ماستر كارد الرافدين', 
       icon: CreditCard,
-      description: t('mastercard')
+      description: 'ادفع عبر ماستر كارد الرافدين'
     },
     { 
       id: 'zainCash', 
