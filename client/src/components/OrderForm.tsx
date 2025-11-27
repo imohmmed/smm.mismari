@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { toEnglishNumbers } from '@/lib/utils';
 import { 
   Select, 
   SelectContent, 
@@ -193,7 +194,7 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
             inputMode="numeric"
             pattern="[0-9]*"
             value={quantity}
-            onChange={(e) => setQuantity(e.target.value.replace(/\D/g, ''))}
+            onChange={(e) => setQuantity(toEnglishNumbers(e.target.value).replace(/\D/g, ''))}
             placeholder={currentService ? `${currentService.minQuantity} - ${currentService.maxQuantity}` : '1000'}
             dir="ltr"
             className="text-left"

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { CreditCard, Smartphone, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, toEnglishNumbers } from '@/lib/utils';
 
 type PaymentMethod = 'rafidain' | 'zainCash' | 'asiaCash';
 
@@ -98,7 +98,7 @@ export default function PaymentMethods({ onSubmit }: PaymentMethodsProps) {
             inputMode="decimal"
             pattern="[0-9.]*"
             value={amount}
-            onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ''))}
+            onChange={(e) => setAmount(toEnglishNumbers(e.target.value).replace(/[^\d.]/g, ''))}
             placeholder="10.00"
             className="text-lg text-left"
             dir="ltr"

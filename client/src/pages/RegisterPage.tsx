@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, User, Phone, Loader2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { toEnglishNumbers } from "@/lib/utils";
 
 export default function RegisterPage() {
   const { t, direction } = useLanguage();
@@ -111,7 +112,7 @@ export default function RegisterPage() {
                   inputMode="tel"
                   pattern="[0-9+]*"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/[^\d+]/g, ''))}
+                  onChange={(e) => setPhone(toEnglishNumbers(e.target.value).replace(/[^\d+]/g, ''))}
                   className="pl-10"
                   placeholder="+964..."
                   dir="ltr"
