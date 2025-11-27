@@ -12,7 +12,7 @@ interface HeaderProps {
 }
 
 export default function Header({ title, balance = 0, onMenuClick, isLoggedIn = false }: HeaderProps) {
-  const { language, setLanguage } = useLanguage();
+  const { t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const [, setLocation] = useLocation();
 
@@ -33,7 +33,7 @@ export default function Header({ title, balance = 0, onMenuClick, isLoggedIn = f
             data-testid="button-login-header"
           >
             <LogIn className="w-4 h-4" />
-            <span>{language === 'ar' ? 'دخول' : 'Login'}</span>
+            <span>دخول</span>
           </Button>
         )}
       </div>
@@ -48,15 +48,6 @@ export default function Header({ title, balance = 0, onMenuClick, isLoggedIn = f
           data-testid="button-theme-toggle"
         >
           {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-        </Button>
-        
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
-          data-testid="button-language-toggle"
-        >
-          <span className="text-sm font-semibold">{language === 'ar' ? 'EN' : 'AR'}</span>
         </Button>
 
         <Button
