@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Switch, Route, useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -6,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import BottomNavigation from '@/components/BottomNavigation';
 import HomePage from '@/pages/HomePage';
@@ -13,24 +15,22 @@ import OrdersPage from '@/pages/OrdersPage';
 import AddFundsPage from '@/pages/AddFundsPage';
 import AccountPage from '@/pages/AccountPage';
 import SupportPage from '@/pages/SupportPage';
+import LoginPage from '@/pages/LoginPage';
+import RegisterPage from '@/pages/RegisterPage';
+import AdminDashboard from '@/pages/admin/AdminDashboard';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Moon, Sun, Globe } from 'lucide-react';
-import { fetchBalance } from '@/lib/api';
+import { Moon, Sun, Globe, Loader2 } from 'lucide-react';
 
 type NavItem = 'account' | 'orders' | 'newOrder' | 'addFunds' | 'support';
 
-function AppContent() {
+function MainApp() {
   const { t, language, setLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
+  const { user, isLoading: authLoading } = useAuth();
   const [activeNav, setActiveNav] = useState<NavItem>('newOrder');
   const [menuOpen, setMenuOpen] = useState(false);
-
-  // Fetch balance from API
-  const { data: balanceData } = useQuery({
-    queryKey: ['/api/balance'],
-    queryFn: fetchBalance,
-  });
+  const [, setLocation] = useLocation();
 
   const getPageTitle = () => {
     switch (activeNav) {
@@ -66,11 +66,24 @@ function AppContent() {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    setLocation('/login');
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header
         title={getPageTitle()}
-        balance={balanceData?.balance || 0}
+        balance={user?.balance || 0}
         onMenuClick={() => setMenuOpen(true)}
       />
 
@@ -86,16 +99,21 @@ function AppContent() {
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetContent side={language === 'ar' ? 'left' : 'right'} className="w-72">
           <SheetHeader>
-            <SheetTitle className="text-right">الإعدادات</SheetTitle>
+            <SheetTitle className="text-right">{t('account')}</SheetTitle>
           </SheetHeader>
           <div className="py-6 space-y-4">
+            <div className="p-4 bg-muted rounded-lg">
+              <p className="font-semibold">{user?.username}</p>
+              <p className="text-sm text-muted-foreground">{user?.email}</p>
+              <p className="text-lg font-bold text-green-500 mt-2">${user?.balance.toFixed(2)}</p>
+            </div>
             <Button
               variant="outline"
               className="w-full justify-between"
               onClick={toggleTheme}
               data-testid="button-theme-menu"
             >
-              <span>الوضع الليلي</span>
+              <span>{language === 'ar' ? 'الوضع الليلي' : 'Dark Mode'}</span>
               {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
             </Button>
             <Button
@@ -104,16 +122,50 @@ function AppContent() {
               onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
               data-testid="button-language-menu"
             >
-              <span>اللغة</span>
+              <span>{language === 'ar' ? 'اللغة' : 'Language'}</span>
               <div className="flex items-center gap-2">
                 <Globe className="w-5 h-5" />
                 <span>{language === 'ar' ? 'العربية' : 'English'}</span>
               </div>
             </Button>
+            {user?.role === 'admin' && (
+              <Button
+                variant="default"
+                className="w-full"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setLocation('/admin');
+                }}
+                data-testid="button-admin-panel"
+              >
+                {t('adminPanel')}
+              </Button>
+            )}
           </div>
         </SheetContent>
       </Sheet>
     </div>
+  );
+}
+
+function AppRoutes() {
+  const { isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <Switch>
+      <Route path="/login" component={LoginPage} />
+      <Route path="/register" component={RegisterPage} />
+      <Route path="/admin" component={AdminDashboard} />
+      <Route path="/" component={MainApp} />
+    </Switch>
   );
 }
 
@@ -123,8 +175,10 @@ function App() {
       <TooltipProvider>
         <ThemeProvider>
           <LanguageProvider>
-            <AppContent />
-            <Toaster />
+            <AuthProvider>
+              <AppRoutes />
+              <Toaster />
+            </AuthProvider>
           </LanguageProvider>
         </ThemeProvider>
       </TooltipProvider>
