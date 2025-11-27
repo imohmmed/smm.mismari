@@ -108,8 +108,10 @@ export default function RegisterPage() {
                 <Input
                   id="phone"
                   type="tel"
+                  inputMode="tel"
+                  pattern="[0-9+]*"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(e.target.value.replace(/[^\d+]/g, ''))}
                   className="pl-10"
                   placeholder="+964..."
                   dir="ltr"

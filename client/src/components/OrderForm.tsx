@@ -195,6 +195,8 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
             value={quantity}
             onChange={(e) => setQuantity(e.target.value.replace(/\D/g, ''))}
             placeholder={currentService ? `${currentService.minQuantity} - ${currentService.maxQuantity}` : '1000'}
+            dir="ltr"
+            className="text-left"
             data-testid="input-quantity"
           />
           {currentService && (

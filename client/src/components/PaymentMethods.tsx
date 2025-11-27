@@ -94,14 +94,14 @@ export default function PaymentMethods({ onSubmit }: PaymentMethodsProps) {
         <div className="mt-4">
           <Label className="text-sm text-muted-foreground mb-2 block text-right">المبلغ (بالدولار)</Label>
           <Input
-            type="number"
-            min="10"
+            type="text"
+            inputMode="decimal"
+            pattern="[0-9.]*"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ''))}
             placeholder="10.00"
-            className="text-lg text-right"
+            className="text-lg text-left"
             dir="ltr"
-            inputMode="numeric"
             data-testid="input-amount"
           />
           <p className="text-xs text-muted-foreground mt-1 text-right">{t('minDeposit')}: 10 دولار</p>
