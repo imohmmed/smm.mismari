@@ -252,7 +252,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                               <p className="text-sm font-medium leading-relaxed">{service.name}</p>
                               <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                                 <span className="text-success font-semibold">
-                                  ${(parseFloat(service.rate) * 1.15).toFixed(4)}
+                                  ${service.rateWithMarkup.toFixed(4)}
                                 </span>
                                 <span>{language === 'ar' ? 'لكل 1000' : 'per 1000'}</span>
                                 {service.refill && (

@@ -32,7 +32,8 @@ export default function ServiceCard({
   onBuy
 }: ServiceCardProps) {
   const { t } = useLanguage();
-  const priceWithMarkup = price * 1.15;
+  // price already includes profit margin from the backend
+  const priceWithMarkup = price;
 
   return (
     <Card className="p-4 hover-elevate">
