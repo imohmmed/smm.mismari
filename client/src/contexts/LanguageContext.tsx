@@ -74,7 +74,7 @@ const translations: Record<Language, Record<string, string>> = {
     'serviceInfo': 'معلومات عن الخدمات',
     'readBeforeOrder': 'اقرأ قبل الطلب',
     'newServices': 'الخدمات المضافة حديثاً',
-    'buyNow': 'يشتري',
+    'buyNow': 'شراء',
     'per1000': 'لكل 1000',
     'min': 'الحد الأدنى',
     'max': 'الحد الأقصى',

@@ -181,13 +181,13 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       <Card className="p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
           <TabsList className="w-full grid grid-cols-2 mb-4">
-            <TabsTrigger value="subscriptions" className="flex items-center gap-2">
-              <ListOrdered className="w-4 h-4" />
-              {t('subscriptions')}
-            </TabsTrigger>
             <TabsTrigger value="newOrder" className="flex items-center gap-2">
               <ShoppingCart className="w-4 h-4" />
               {t('newOrder')}
+            </TabsTrigger>
+            <TabsTrigger value="subscriptions" className="flex items-center gap-2">
+              <ListOrdered className="w-4 h-4" />
+              {t('subscriptions')}
             </TabsTrigger>
           </TabsList>
 
