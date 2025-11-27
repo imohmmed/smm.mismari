@@ -1,25 +1,17 @@
-import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { 
   Mail, 
   Phone, 
-  Shield, 
-  Bell, 
-  Code, 
   Lock,
-  ChevronLeft,
-  ChevronRight,
   User,
   LogOut
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface AccountSettingsProps {
   user: {
@@ -36,34 +28,7 @@ interface AccountSettingsProps {
 }
 
 export default function AccountSettings({ user, onChangeUsername, onChangeEmail, onChangePhone, onChangePassword, onLogout }: AccountSettingsProps) {
-  const { t, direction } = useLanguage();
-  const [twoFactor, setTwoFactor] = useState(false);
-  const [notifications, setNotifications] = useState(true);
-
-  const ChevronIcon = direction === 'rtl' ? ChevronLeft : ChevronRight;
-
-  const settingsItems = [
-    { 
-      icon: Shield, 
-      label: t('security'), 
-      action: () => console.log('Security clicked'),
-      badge: twoFactor ? 'ON' : 'OFF',
-      badgeVariant: twoFactor ? 'default' : 'secondary'
-    },
-    { 
-      icon: Bell, 
-      label: t('notifications'), 
-      action: () => console.log('Notifications clicked'),
-      hasSwitch: true,
-      switchValue: notifications,
-      onSwitch: setNotifications
-    },
-    { 
-      icon: Code, 
-      label: t('apiInterface'), 
-      action: () => console.log('API clicked')
-    },
-  ];
+  const { t } = useLanguage();
 
   return (
     <div className="space-y-4">
@@ -120,52 +85,6 @@ export default function AccountSettings({ user, onChangeUsername, onChangeEmail,
             {t('changePhone')}
           </Button>
         </div>
-      </Card>
-
-      <Card className="divide-y divide-border">
-        <button
-          onClick={() => setTwoFactor(!twoFactor)}
-          className="flex items-center justify-between w-full p-4 hover-elevate"
-          data-testid="button-two-factor"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Shield className="w-5 h-5 text-primary" />
-            </div>
-            <span className="font-medium">{t('twoFactor')}</span>
-          </div>
-          <Badge variant={twoFactor ? 'default' : 'secondary'}>
-            {twoFactor ? 'ON' : 'OFF'}
-          </Badge>
-        </button>
-
-        <div
-          className="flex items-center justify-between w-full p-4 hover-elevate cursor-pointer"
-          onClick={() => setNotifications(!notifications)}
-          data-testid="button-notifications"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center">
-              <Bell className="w-5 h-5 text-orange-500" />
-            </div>
-            <span className="font-medium">{t('notifications')}</span>
-          </div>
-          <Switch checked={notifications} onCheckedChange={setNotifications} />
-        </div>
-
-        <button
-          onClick={() => console.log('API clicked')}
-          className="flex items-center justify-between w-full p-4 hover-elevate"
-          data-testid="button-api"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center">
-              <Code className="w-5 h-5 text-purple-500" />
-            </div>
-            <span className="font-medium">{t('apiInterface')}</span>
-          </div>
-          <ChevronIcon className="w-5 h-5 text-muted-foreground" />
-        </button>
       </Card>
 
       <Card className="p-4">
