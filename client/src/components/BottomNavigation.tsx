@@ -29,7 +29,7 @@ export default function BottomNavigation({ activeItem, onItemClick }: BottomNavi
     <div className="fixed bottom-0 left-0 right-0 z-50 px-3 pb-2 safe-area-bottom">
       <nav className="bg-card border border-border rounded-2xl shadow-lg relative">
         <div className="flex items-center justify-between h-16 px-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1">
             {orderedLeftItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeItem === item.id;
@@ -51,15 +51,17 @@ export default function BottomNavigation({ activeItem, onItemClick }: BottomNavi
             })}
           </div>
 
-          <button
-            onClick={() => onItemClick('newOrder')}
-            className="absolute left-1/2 -translate-x-1/2 -top-5 flex items-center justify-center w-14 h-14 rounded-full bg-success text-success-foreground shadow-lg hover-elevate active-elevate-2"
-            data-testid="button-new-order"
-          >
-            <Plus className="w-7 h-7" />
-          </button>
+          <div className="flex items-center justify-center flex-1">
+            <button
+              onClick={() => onItemClick('newOrder')}
+              className="flex items-center justify-center w-14 h-14 -mt-8 rounded-full bg-success text-success-foreground shadow-lg hover-elevate active-elevate-2"
+              data-testid="button-new-order"
+            >
+              <Plus className="w-7 h-7" />
+            </button>
+          </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1 justify-end">
             {orderedRightItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeItem === item.id;
