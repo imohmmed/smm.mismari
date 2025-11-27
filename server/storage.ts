@@ -6,12 +6,14 @@ import {
   type ServiceWithMarkup,
   type CuratedService,
   type InsertCuratedService,
+  type Setting,
   users,
   orders,
-  curatedServices
+  curatedServices,
+  settings
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, like, or, desc, count } from "drizzle-orm";
+import { eq, like, or, desc, count, sum } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 const SALT_ROUNDS = 10;
@@ -47,6 +49,10 @@ export interface IStorage {
   cacheServices(services: ServiceWithMarkup[]): void;
   getCachedServices(): ServiceWithMarkup[];
   getServiceById(serviceId: number): ServiceWithMarkup | undefined;
+  
+  getSetting(key: string): Promise<string | null>;
+  setSetting(key: string, value: string): Promise<void>;
+  getTotalRevenue(): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -232,6 +238,25 @@ export class DatabaseStorage implements IStorage {
 
   getServiceById(serviceId: number): ServiceWithMarkup | undefined {
     return this.servicesCache.find(s => s.service === serviceId);
+  }
+
+  async getSetting(key: string): Promise<string | null> {
+    const [setting] = await db.select().from(settings).where(eq(settings.key, key));
+    return setting?.value || null;
+  }
+
+  async setSetting(key: string, value: string): Promise<void> {
+    const existing = await this.getSetting(key);
+    if (existing !== null) {
+      await db.update(settings).set({ value, updatedAt: new Date() }).where(eq(settings.key, key));
+    } else {
+      await db.insert(settings).values({ key, value });
+    }
+  }
+
+  async getTotalRevenue(): Promise<number> {
+    const result = await db.select({ total: sum(orders.charge) }).from(orders);
+    return parseFloat(result[0]?.total || '0');
   }
 }
 

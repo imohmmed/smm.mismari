@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Users, 
@@ -13,39 +14,83 @@ import {
   LogOut,
   Sun,
   Moon,
-  Globe
+  TrendingUp,
+  Percent,
+  Loader2,
+  Check
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import AdminUsers from "./AdminUsers";
 import AdminServices from "./AdminServices";
 import AdminOrders from "./AdminOrders";
 
+interface AdminStats {
+  users: number;
+  orders: number;
+  services: number;
+  totalBalance: number;
+  totalRevenue: number;
+  profit: number;
+  profitMargin: number;
+}
+
 export default function AdminDashboard() {
-  const { t, direction, language, setLanguage } = useLanguage();
+  const { t, direction } = useLanguage();
   const { user, logout, isAdmin } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("users");
+  const [editingMargin, setEditingMargin] = useState(false);
+  const [newMargin, setNewMargin] = useState("");
 
-  const { data: usersData } = useQuery<{ users: any[]; total: number }>({
-    queryKey: ["/api/admin/users"],
+  const { data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
+    queryKey: ["/api/admin/stats"],
     enabled: isAdmin,
+    refetchInterval: 30000,
   });
 
-  const { data: ordersData } = useQuery<{ orders: any[]; total: number }>({
-    queryKey: ["/api/admin/orders"],
-    enabled: isAdmin,
-  });
-
-  const { data: servicesData } = useQuery<{ services: any[]; total: number }>({
-    queryKey: ["/api/admin/services"],
-    enabled: isAdmin,
+  const updateMarginMutation = useMutation({
+    mutationFn: async (margin: number) => {
+      const res = await apiRequest("POST", "/api/admin/settings/profit-margin", { profitMargin: margin });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      setEditingMargin(false);
+      toast({
+        title: "تم التحديث",
+        description: "تم تحديث نسبة الأرباح بنجاح",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "خطأ",
+        description: "فشل تحديث نسبة الأرباح",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleLogout = async () => {
     await logout();
     setLocation("/login");
+  };
+
+  const handleSaveMargin = () => {
+    const margin = parseFloat(newMargin);
+    if (isNaN(margin) || margin < 0 || margin > 100) {
+      toast({
+        title: "خطأ",
+        description: "النسبة يجب أن تكون بين 0 و 100",
+        variant: "destructive",
+      });
+      return;
+    }
+    updateMarginMutation.mutate(margin);
   };
 
   if (!isAdmin) {
@@ -58,11 +103,6 @@ export default function AdminDashboard() {
       </div>
     );
   }
-
-  const totalUsers = usersData?.users?.length || 0;
-  const totalOrders = ordersData?.orders?.length || 0;
-  const totalServices = servicesData?.services?.length || 0;
-  const totalBalance = usersData?.users?.reduce((acc: number, u: any) => acc + (u.balance || 0), 0) || 0;
 
   return (
     <div className="min-h-screen bg-background" dir={direction}>
@@ -79,14 +119,6 @@ export default function AdminDashboard() {
           </div>
           
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setLanguage(language === "ar" ? "en" : "ar")}
-              data-testid="button-language-toggle"
-            >
-              <Globe className="w-5 h-5" />
-            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -108,21 +140,7 @@ export default function AdminDashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center">
-                  <Users className="w-6 h-6 text-blue-500" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{totalUsers}</p>
-                  <p className="text-xs text-muted-foreground">{t("totalUsers")}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -130,7 +148,7 @@ export default function AdminDashboard() {
                   <DollarSign className="w-6 h-6 text-green-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">${totalBalance.toFixed(2)}</p>
+                  <p className="text-2xl font-bold">${stats?.totalBalance?.toFixed(2) || "0.00"}</p>
                   <p className="text-xs text-muted-foreground">{t("totalBalance")}</p>
                 </div>
               </div>
@@ -140,12 +158,12 @@ export default function AdminDashboard() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center">
-                  <ShoppingCart className="w-6 h-6 text-purple-500" />
+                <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center">
+                  <Users className="w-6 h-6 text-blue-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{totalOrders}</p>
-                  <p className="text-xs text-muted-foreground">{t("totalOrders")}</p>
+                  <p className="text-2xl font-bold">{stats?.users || 0}</p>
+                  <p className="text-xs text-muted-foreground">{t("totalUsers")}</p>
                 </div>
               </div>
             </CardContent>
@@ -158,8 +176,88 @@ export default function AdminDashboard() {
                   <Package className="w-6 h-6 text-orange-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{totalServices}</p>
+                  <p className="text-2xl font-bold">
+                    {statsLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : stats?.services?.toLocaleString() || 0}
+                  </p>
                   <p className="text-xs text-muted-foreground">{t("services")}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center">
+                  <ShoppingCart className="w-6 h-6 text-purple-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stats?.orders || 0}</p>
+                  <p className="text-xs text-muted-foreground">{t("totalOrders")}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-emerald-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-emerald-500">${stats?.profit?.toFixed(2) || "0.00"}</p>
+                  <p className="text-xs text-muted-foreground">الأرباح</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-cyan-500/10 flex items-center justify-center">
+                  <Percent className="w-6 h-6 text-cyan-500" />
+                </div>
+                <div className="flex-1">
+                  {editingMargin ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        value={newMargin}
+                        onChange={(e) => setNewMargin(e.target.value)}
+                        className="w-16 h-8 text-sm"
+                        min="0"
+                        max="100"
+                        data-testid="input-profit-margin"
+                      />
+                      <span>%</span>
+                      <Button
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={handleSaveMargin}
+                        disabled={updateMarginMutation.isPending}
+                      >
+                        {updateMarginMutation.isPending ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Check className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setNewMargin(stats?.profitMargin?.toString() || "15");
+                        setEditingMargin(true);
+                      }}
+                      className="text-right w-full hover:opacity-80"
+                      data-testid="button-edit-margin"
+                    >
+                      <p className="text-2xl font-bold">{stats?.profitMargin || 15}%</p>
+                      <p className="text-xs text-muted-foreground">نسبة الأرباح</p>
+                    </button>
+                  )}
                 </div>
               </div>
             </CardContent>

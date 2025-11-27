@@ -473,6 +473,78 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin/stats", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const [usersCount, ordersCount, totalRevenue] = await Promise.all([
+        storage.countUsers(),
+        storage.countOrders(),
+        storage.getTotalRevenue(),
+      ]);
+
+      let servicesCount = 0;
+      let services = storage.getCachedServices();
+      
+      if (services.length === 0) {
+        try {
+          const api = getAmazingSmmApi();
+          services = await api.getServices();
+          if (services.length > 0) {
+            storage.cacheServices(services);
+          }
+        } catch {
+          services = createMockServices();
+          storage.cacheServices(services);
+        }
+      }
+      servicesCount = services.length;
+
+      const profitMargin = parseFloat(await storage.getSetting("profit_margin") || "15");
+      const profit = (totalRevenue * profitMargin) / (100 + profitMargin);
+
+      const users = await storage.getAllUsers();
+      const totalBalance = users.reduce((acc, u) => acc + (u.balance || 0), 0);
+
+      res.json({
+        users: usersCount,
+        orders: ordersCount,
+        services: servicesCount,
+        totalBalance,
+        totalRevenue,
+        profit,
+        profitMargin,
+      });
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ error: "Failed to fetch stats" });
+    }
+  });
+
+  app.get("/api/admin/settings/profit-margin", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const margin = await storage.getSetting("profit_margin");
+      res.json({ profitMargin: parseFloat(margin || "15") });
+    } catch (error) {
+      console.error("Error fetching profit margin:", error);
+      res.status(500).json({ error: "Failed to fetch profit margin" });
+    }
+  });
+
+  app.post("/api/admin/settings/profit-margin", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { profitMargin } = req.body;
+      
+      if (typeof profitMargin !== "number" || profitMargin < 0 || profitMargin > 100) {
+        return res.status(400).json({ error: "Invalid profit margin (0-100)" });
+      }
+
+      await storage.setSetting("profit_margin", profitMargin.toString());
+      res.json({ success: true, profitMargin });
+    } catch (error) {
+      console.error("Error updating profit margin:", error);
+      res.status(500).json({ error: "Failed to update profit margin" });
+    }
+  });
+
   app.get("/api/admin/service-lookup/:serviceId", requireAdmin, async (req: Request, res: Response) => {
     try {
       const serviceId = parseInt(req.params.serviceId);
