@@ -6,6 +6,7 @@ interface User {
   id: string;
   username: string;
   email: string;
+  phone?: string;
   balance: number;
   role: string;
   discount?: number;

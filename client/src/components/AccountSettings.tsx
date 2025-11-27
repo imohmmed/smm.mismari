@@ -15,7 +15,9 @@ import {
   Code, 
   Lock,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  User,
+  LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -26,11 +28,14 @@ interface AccountSettingsProps {
     phone: string;
     avatar?: string;
   };
+  onChangeUsername?: () => void;
   onChangeEmail?: () => void;
+  onChangePhone?: () => void;
   onChangePassword?: () => void;
+  onLogout?: () => void;
 }
 
-export default function AccountSettings({ user, onChangeEmail, onChangePassword }: AccountSettingsProps) {
+export default function AccountSettings({ user, onChangeUsername, onChangeEmail, onChangePhone, onChangePassword, onLogout }: AccountSettingsProps) {
   const { t, direction } = useLanguage();
   const [twoFactor, setTwoFactor] = useState(false);
   const [notifications, setNotifications] = useState(true);
@@ -87,14 +92,34 @@ export default function AccountSettings({ user, onChangeEmail, onChangePassword 
           </div>
         </div>
 
-        <Button 
-          onClick={onChangeEmail}
-          className="w-full mt-4 bg-primary"
-          data-testid="button-change-email"
-        >
-          <Mail className="w-4 h-4 ml-2" />
-          {t('changeEmail')}
-        </Button>
+        <div className="space-y-3 mt-4">
+          <Button 
+            onClick={onChangeUsername}
+            className="w-full bg-primary"
+            data-testid="button-change-username"
+          >
+            <User className="w-4 h-4 ml-2" />
+            {t('changeUsername')}
+          </Button>
+
+          <Button 
+            onClick={onChangeEmail}
+            className="w-full bg-primary"
+            data-testid="button-change-email"
+          >
+            <Mail className="w-4 h-4 ml-2" />
+            {t('changeEmail')}
+          </Button>
+
+          <Button 
+            onClick={onChangePhone}
+            className="w-full bg-primary"
+            data-testid="button-change-phone"
+          >
+            <Phone className="w-4 h-4 ml-2" />
+            {t('changePhone')}
+          </Button>
+        </div>
       </Card>
 
       <Card className="divide-y divide-border">
@@ -168,6 +193,16 @@ export default function AccountSettings({ user, onChangeEmail, onChangePassword 
           </Button>
         </div>
       </Card>
+
+      <Button 
+        onClick={onLogout}
+        variant="destructive" 
+        className="w-full"
+        data-testid="button-logout"
+      >
+        <LogOut className="w-4 h-4 ml-2" />
+        {t('logout')}
+      </Button>
     </div>
   );
 }
