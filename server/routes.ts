@@ -395,6 +395,53 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/admin/users/:id/role", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { role } = req.body;
+      
+      if (!["user", "admin"].includes(role)) {
+        return res.status(400).json({ error: "Invalid role" });
+      }
+
+      const user = await storage.updateUserRole(req.params.id, role);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json({
+        success: true,
+        user: {
+          id: user.id,
+          username: user.username,
+          role: user.role,
+        },
+      });
+    } catch (error) {
+      console.error("Error updating role:", error);
+      res.status(500).json({ error: "Failed to update role" });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const userId = req.params.id;
+      
+      if (userId === req.session.userId) {
+        return res.status(400).json({ error: "Cannot delete yourself" });
+      }
+
+      const success = await storage.deleteUser(userId);
+      if (!success) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ error: "Failed to delete user" });
+    }
+  });
+
   app.get("/api/admin/services", requireAdmin, async (req: Request, res: Response) => {
     try {
       const curatedServices = await storage.getCuratedServices();
@@ -475,10 +522,9 @@ export async function registerRoutes(
 
   app.get("/api/admin/stats", requireAdmin, async (req: Request, res: Response) => {
     try {
-      const [usersCount, ordersCount, totalRevenue] = await Promise.all([
+      const [usersCount, ordersCount] = await Promise.all([
         storage.countUsers(),
         storage.countOrders(),
-        storage.getTotalRevenue(),
       ]);
 
       let servicesCount = 0;
@@ -498,18 +544,19 @@ export async function registerRoutes(
       }
       servicesCount = services.length;
 
-      const profitMargin = parseFloat(await storage.getSetting("profit_margin") || "15");
-      const profit = (totalRevenue * profitMargin) / (100 + profitMargin);
-
       const users = await storage.getAllUsers();
       const totalBalance = users.reduce((acc, u) => acc + (u.balance || 0), 0);
+      const totalSpending = users.reduce((acc, u) => acc + (u.totalSpent || 0), 0);
+
+      const profitMargin = parseFloat(await storage.getSetting("profit_margin") || "15");
+      const profit = (totalSpending * profitMargin) / 100;
 
       res.json({
         users: usersCount,
         orders: ordersCount,
         services: servicesCount,
         totalBalance,
-        totalRevenue,
+        totalSpending,
         profit,
         profitMargin,
       });

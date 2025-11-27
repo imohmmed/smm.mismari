@@ -17,7 +17,9 @@ import {
   TrendingUp,
   Percent,
   Loader2,
-  Check
+  Check,
+  Wallet,
+  CreditCard
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -32,7 +34,7 @@ interface AdminStats {
   orders: number;
   services: number;
   totalBalance: number;
-  totalRevenue: number;
+  totalSpending: number;
   profit: number;
   profitMargin: number;
 }
@@ -140,12 +142,12 @@ export default function AdminDashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-green-500" />
+                  <Wallet className="w-6 h-6 text-green-500" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">${stats?.totalBalance?.toFixed(2) || "0.00"}</p>
@@ -202,6 +204,20 @@ export default function AdminDashboard() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-indigo-500/10 flex items-center justify-center">
+                  <CreditCard className="w-6 h-6 text-indigo-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">${stats?.totalSpending?.toFixed(2) || "0.00"}</p>
+                  <p className="text-xs text-muted-foreground">إجمالي الإنفاق</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-emerald-500" />
                 </div>
@@ -213,7 +229,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="col-span-2">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-cyan-500/10 flex items-center justify-center">
@@ -226,7 +242,7 @@ export default function AdminDashboard() {
                         type="number"
                         value={newMargin}
                         onChange={(e) => setNewMargin(e.target.value)}
-                        className="w-16 h-8 text-sm"
+                        className="w-20 h-8 text-sm"
                         min="0"
                         max="100"
                         data-testid="input-profit-margin"
@@ -255,7 +271,7 @@ export default function AdminDashboard() {
                       data-testid="button-edit-margin"
                     >
                       <p className="text-2xl font-bold">{stats?.profitMargin || 15}%</p>
-                      <p className="text-xs text-muted-foreground">نسبة الأرباح</p>
+                      <p className="text-xs text-muted-foreground">نسبة الأرباح (اضغط للتعديل)</p>
                     </button>
                   )}
                 </div>

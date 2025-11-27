@@ -53,6 +53,9 @@ export interface IStorage {
   getSetting(key: string): Promise<string | null>;
   setSetting(key: string, value: string): Promise<void>;
   getTotalRevenue(): Promise<number>;
+  
+  updateUserRole(id: string, role: string): Promise<User | undefined>;
+  deleteUser(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -257,6 +260,20 @@ export class DatabaseStorage implements IStorage {
   async getTotalRevenue(): Promise<number> {
     const result = await db.select({ total: sum(orders.charge) }).from(orders);
     return parseFloat(result[0]?.total || '0');
+  }
+
+  async updateUserRole(id: string, role: string): Promise<User | undefined> {
+    const [updated] = await db.update(users)
+      .set({ role })
+      .where(eq(users.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    await db.delete(orders).where(eq(orders.userId, id));
+    const result = await db.delete(users).where(eq(users.id, id));
+    return true;
   }
 }
 

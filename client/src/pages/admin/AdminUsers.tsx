@@ -6,12 +6,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Search, 
@@ -21,7 +33,10 @@ import {
   Mail,
   Phone,
   DollarSign,
-  Loader2
+  Loader2,
+  Trash2,
+  Shield,
+  ShieldOff
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -44,7 +59,9 @@ export default function AdminUsers() {
   
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+  const [userActionsOpen, setUserActionsOpen] = useState(false);
   const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [balanceAmount, setBalanceAmount] = useState("");
   const [balanceOperation, setBalanceOperation] = useState<"add" | "subtract">("add");
 
@@ -66,13 +83,49 @@ export default function AdminUsers() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-      toast({ title: t("success") });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      toast({ title: "تم بنجاح" });
       setBalanceDialogOpen(false);
+      setUserActionsOpen(false);
       setSelectedUser(null);
       setBalanceAmount("");
     },
     onError: (error: any) => {
-      toast({ title: t("error"), description: error.message, variant: "destructive" });
+      toast({ title: "خطأ", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const roleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      const res = await apiRequest("POST", `/api/admin/users/${userId}/role`, { role });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "تم تحديث الصلاحيات" });
+      setUserActionsOpen(false);
+      setSelectedUser(null);
+    },
+    onError: (error: any) => {
+      toast({ title: "خطأ", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const res = await apiRequest("DELETE", `/api/admin/users/${userId}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      toast({ title: "تم حذف المستخدم" });
+      setDeleteDialogOpen(false);
+      setUserActionsOpen(false);
+      setSelectedUser(null);
+    },
+    onError: (error: any) => {
+      toast({ title: "خطأ", description: error.message, variant: "destructive" });
     },
   });
 
@@ -81,7 +134,7 @@ export default function AdminUsers() {
     
     const amount = parseFloat(balanceAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast({ title: t("error"), description: "Invalid amount", variant: "destructive" });
+      toast({ title: "خطأ", description: "المبلغ غير صالح", variant: "destructive" });
       return;
     }
 
@@ -92,11 +145,15 @@ export default function AdminUsers() {
     });
   };
 
-  const openBalanceDialog = (user: UserData, operation: "add" | "subtract") => {
-    setSelectedUser(user);
+  const openBalanceDialog = (operation: "add" | "subtract") => {
     setBalanceOperation(operation);
     setBalanceAmount("");
     setBalanceDialogOpen(true);
+  };
+
+  const handleUserClick = (user: UserData) => {
+    setSelectedUser(user);
+    setUserActionsOpen(true);
   };
 
   const users: UserData[] = data?.users || [];
@@ -128,20 +185,25 @@ export default function AdminUsers() {
             </div>
           ) : users.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No users found
+              لا يوجد مستخدمين
             </div>
           ) : (
             <div className="space-y-3">
               {users.map((user) => (
-                <Card key={user.id} className="p-4">
+                <Card 
+                  key={user.id} 
+                  className="p-4 cursor-pointer hover-elevate"
+                  onClick={() => handleUserClick(user)}
+                  data-testid={`user-card-${user.id}`}
+                >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-semibold">{user.username}</span>
                         {user.role === "admin" && (
-                          <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded">
+                          <Badge className="bg-primary text-primary-foreground">
                             Admin
-                          </span>
+                          </Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -165,28 +227,6 @@ export default function AdminUsers() {
                         {t("memberSince")}: {format(new Date(user.createdAt), "yyyy-MM-dd")}
                       </div>
                     </div>
-                    
-                    <div className="flex flex-col gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => openBalanceDialog(user, "add")}
-                        className="gap-1"
-                        data-testid={`button-add-balance-${user.id}`}
-                      >
-                        <Plus className="w-3 h-3" />
-                        {t("addBalance")}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => openBalanceDialog(user, "subtract")}
-                        className="gap-1"
-                        data-testid={`button-subtract-balance-${user.id}`}
-                      >
-                        <Minus className="w-3 h-3" />
-                        {t("subtractBalance")}
-                      </Button>
-                    </div>
                   </div>
                 </Card>
               ))}
@@ -195,11 +235,105 @@ export default function AdminUsers() {
         </CardContent>
       </Card>
 
+      <Dialog open={userActionsOpen} onOpenChange={setUserActionsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>إدارة المستخدم</DialogTitle>
+            <DialogDescription>
+              {selectedUser?.username} - {selectedUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedUser && (
+            <div className="space-y-4">
+              <div className="p-4 bg-muted rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold">{selectedUser.username}</span>
+                  {selectedUser.role === "admin" && (
+                    <Badge className="bg-primary">Admin</Badge>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                <p className="text-lg font-bold text-green-500 mt-2">
+                  الرصيد: ${selectedUser.balance.toFixed(2)}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  إجمالي الإنفاق: ${selectedUser.totalSpent.toFixed(2)}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  onClick={() => openBalanceDialog("add")}
+                  className="gap-2"
+                  data-testid="button-add-balance"
+                >
+                  <Plus className="w-4 h-4" />
+                  إضافة رصيد
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => openBalanceDialog("subtract")}
+                  className="gap-2"
+                  data-testid="button-subtract-balance"
+                >
+                  <Minus className="w-4 h-4" />
+                  خصم رصيد
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                {selectedUser.role === "admin" ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => roleMutation.mutate({ userId: selectedUser.id, role: "user" })}
+                    disabled={roleMutation.isPending}
+                    className="gap-2"
+                    data-testid="button-remove-admin"
+                  >
+                    {roleMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <ShieldOff className="w-4 h-4" />
+                    )}
+                    إزالة الأدمن
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={() => roleMutation.mutate({ userId: selectedUser.id, role: "admin" })}
+                    disabled={roleMutation.isPending}
+                    className="gap-2"
+                    data-testid="button-make-admin"
+                  >
+                    {roleMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Shield className="w-4 h-4" />
+                    )}
+                    جعله أدمن
+                  </Button>
+                )}
+                <Button
+                  variant="destructive"
+                  onClick={() => setDeleteDialogOpen(true)}
+                  className="gap-2"
+                  data-testid="button-delete-user"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  حذف المستخدم
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={balanceDialogOpen} onOpenChange={setBalanceDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {balanceOperation === "add" ? t("addBalance") : t("subtractBalance")}
+              {balanceOperation === "add" ? "إضافة رصيد" : "خصم رصيد"}
             </DialogTitle>
           </DialogHeader>
           
@@ -255,6 +389,32 @@ export default function AdminUsers() {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد الحذف</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من حذف المستخدم "{selectedUser?.username}"؟
+              <br />
+              سيتم حذف جميع طلباته أيضاً. هذا الإجراء لا يمكن التراجع عنه.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => selectedUser && deleteMutation.mutate(selectedUser.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "حذف"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
