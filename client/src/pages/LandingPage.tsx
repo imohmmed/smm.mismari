@@ -437,7 +437,7 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
           >
             <Button
               onClick={() => onNavigate('newOrder')}
-              className="bg-success hover:bg-success/90"
+              className="bg-primary hover:bg-primary/90"
               data-testid="button-cta-order"
             >
               <ShoppingBag className="w-4 h-4 ml-2" />

@@ -24,7 +24,7 @@ export default function EmptyState({ type, username, onAction }: EmptyStateProps
         <p className="text-sm text-muted-foreground mb-6">
           يمكنك إضافة رصيد وطلب أي خدمة على صفحة الطلب الجديد.
         </p>
-        <Button onClick={onAction} className="bg-success hover:bg-success/90 text-success-foreground">
+        <Button onClick={onAction} className="bg-primary hover:bg-primary/90 text-primary-foreground">
           <Plus className="w-4 h-4 ml-2" />
           طلب جديد
         </Button>
