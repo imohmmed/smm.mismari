@@ -127,10 +127,10 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
 
       <div className="space-y-4">
         {showCategorySelect && (
-          <div>
-            <Label className="text-sm text-muted-foreground mb-2 block">{t('category')}</Label>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger data-testid="select-category">
+          <div dir="rtl">
+            <Label className="text-sm text-muted-foreground mb-2 block text-right">{t('category')}</Label>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory} dir="rtl">
+              <SelectTrigger data-testid="select-category" className="text-right">
                 <SelectValue placeholder={t('selectCategory')} />
               </SelectTrigger>
               <SelectContent className="max-h-80 w-[calc(100vw-3rem)] max-w-md" dir="rtl">
@@ -138,7 +138,7 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
                   <SelectItem 
                     key={cat} 
                     value={cat}
-                    className="flex-row-reverse text-right py-3"
+                    className="text-right py-3"
                   >
                     <span className="text-sm leading-relaxed">{cat}</span>
                   </SelectItem>
@@ -148,10 +148,10 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
           </div>
         )}
 
-        <div>
-          <Label className="text-sm text-muted-foreground mb-2 block">{t('serviceName')}</Label>
-          <Select value={selectedService} onValueChange={setSelectedService}>
-            <SelectTrigger data-testid="select-service">
+        <div dir="rtl">
+          <Label className="text-sm text-muted-foreground mb-2 block text-right">{t('serviceName')}</Label>
+          <Select value={selectedService} onValueChange={setSelectedService} dir="rtl">
+            <SelectTrigger data-testid="select-service" className="text-right">
               <SelectValue placeholder={t('serviceName')} />
             </SelectTrigger>
             <SelectContent className="max-h-80 w-[calc(100vw-3rem)] max-w-md" dir="rtl">
@@ -159,9 +159,9 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
                 <SelectItem 
                   key={service.id} 
                   value={service.id.toString()}
-                  className="flex-row-reverse text-right py-3"
+                  className="text-right py-3"
                 >
-                  <span className="inline-flex items-center gap-2">
+                  <span className="inline-flex items-center gap-2 flex-row-reverse">
                     <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-xs font-mono shrink-0">
                       {service.id}
                     </span>
