@@ -1,0 +1,160 @@
+import { useState } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
+} from '@/components/ui/accordion';
+import { CreditCard, Smartphone, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+type PaymentMethod = 'mastercard' | 'zainCash' | 'asiaCash';
+
+interface PaymentMethodsProps {
+  onSubmit: (method: PaymentMethod, amount: number) => void;
+}
+
+export default function PaymentMethods({ onSubmit }: PaymentMethodsProps) {
+  const { t } = useLanguage();
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('mastercard');
+  const [amount, setAmount] = useState('');
+
+  const methods: { id: PaymentMethod; name: string; icon: typeof CreditCard; description: string }[] = [
+    { 
+      id: 'mastercard', 
+      name: 'فيزا - ماستر كارد - جوجل باي - ابل باي [5% بونص اذا اودعت 10$]', 
+      icon: CreditCard,
+      description: t('mastercard')
+    },
+    { 
+      id: 'zainCash', 
+      name: t('zainCash'), 
+      icon: Smartphone,
+      description: 'ادفع عبر محفظة زين كاش'
+    },
+    { 
+      id: 'asiaCash', 
+      name: t('asiaCash'), 
+      icon: Smartphone,
+      description: 'ادفع عبر آسيا سيل'
+    },
+  ];
+
+  const handleSubmit = () => {
+    const amountNum = parseFloat(amount);
+    if (amountNum >= 10) {
+      onSubmit(selectedMethod, amountNum);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-4 border-0">
+        <h2 className="text-lg font-semibold mb-2">{t('acceptPayments')}</h2>
+        <p className="text-sm opacity-90">{t('contactPayment')}</p>
+      </Card>
+
+      <Card className="p-4">
+        <h3 className="font-semibold mb-4 flex items-center gap-2">
+          <CreditCard className="w-5 h-5" />
+          {t('paymentMethods')}
+        </h3>
+
+        <RadioGroup 
+          value={selectedMethod} 
+          onValueChange={(v) => setSelectedMethod(v as PaymentMethod)}
+          className="space-y-3"
+        >
+          {methods.map((method) => {
+            const Icon = method.icon;
+            return (
+              <div
+                key={method.id}
+                className={cn(
+                  "flex items-center gap-3 p-4 rounded-lg border-2 transition-all cursor-pointer",
+                  selectedMethod === method.id 
+                    ? "border-primary bg-primary/5" 
+                    : "border-border hover:border-primary/50"
+                )}
+                onClick={() => setSelectedMethod(method.id)}
+              >
+                <RadioGroupItem value={method.id} id={method.id} />
+                <div className="flex-1">
+                  <Label htmlFor={method.id} className="font-medium cursor-pointer">
+                    {method.name}
+                  </Label>
+                </div>
+                <Icon className="w-6 h-6 text-muted-foreground" />
+              </div>
+            );
+          })}
+        </RadioGroup>
+
+        <div className="mt-4">
+          <Label className="text-sm text-muted-foreground mb-2 block">المبلغ (بالدولار)</Label>
+          <Input
+            type="number"
+            min="10"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="10.00"
+            className="text-lg"
+            dir="ltr"
+            data-testid="input-amount"
+          />
+          <p className="text-xs text-muted-foreground mt-1">{t('minDeposit')}: 10 دولار</p>
+        </div>
+
+        <Button
+          onClick={handleSubmit}
+          disabled={!amount || parseFloat(amount) < 10}
+          className="w-full mt-4 bg-success hover:bg-success/90 text-success-foreground"
+          data-testid="button-add-funds"
+        >
+          {t('addBalance')}
+        </Button>
+      </Card>
+
+      <Card className="p-4">
+        <h3 className="font-semibold mb-3">{t('instructions')}</h3>
+        
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="notes">
+            <AccordionTrigger className="text-sm">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-destructive" />
+                {t('importantNotes')}
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <ul className="space-y-3 text-sm">
+                <li className="flex items-start gap-2">
+                  <span className="w-2 h-2 rounded-full bg-destructive mt-1.5 shrink-0" />
+                  <span>{t('minDeposit')}: 10 دولار</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-2 h-2 rounded-full bg-destructive mt-1.5 shrink-0" />
+                  <span>{t('paymentNote')}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-2 h-2 rounded-full bg-destructive mt-1.5 shrink-0" />
+                  <span>{t('cvcNote')}</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-success mt-0.5 shrink-0" />
+                  <span>{t('contactSupport')}</span>
+                </li>
+              </ul>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </Card>
+    </div>
+  );
+}
