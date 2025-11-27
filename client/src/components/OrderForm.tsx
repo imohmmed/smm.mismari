@@ -133,9 +133,15 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
               <SelectTrigger data-testid="select-category">
                 <SelectValue placeholder={t('selectCategory')} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-80 w-[calc(100vw-3rem)] max-w-md" dir="rtl">
                 {categories.map(cat => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  <SelectItem 
+                    key={cat} 
+                    value={cat}
+                    className="flex-row-reverse text-right py-3"
+                  >
+                    <span className="text-sm leading-relaxed">{cat}</span>
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -153,7 +159,7 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
                 <SelectItem 
                   key={service.id} 
                   value={service.id.toString()}
-                  className="flex-row-reverse text-right"
+                  className="flex-row-reverse text-right py-3"
                 >
                   <span className="inline-flex items-center gap-2">
                     <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-xs font-mono shrink-0">
