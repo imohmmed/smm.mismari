@@ -11,12 +11,12 @@ export default function ServiceInfoTabs() {
   return (
     <Card className="overflow-hidden">
       <Tabs defaultValue="info" className="w-full">
-        <TabsList className="w-full grid grid-cols-2 rounded-none bg-muted/50 h-auto p-0">
-          <TabsTrigger value="info" className="py-3 rounded-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+        <TabsList className="w-full flex flex-row-reverse rounded-none bg-muted/50 h-auto p-0">
+          <TabsTrigger value="info" className="flex-1 py-3 rounded-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Info className={`w-4 h-4 ${iconMargin}`} />
             {t('serviceInfo')}
           </TabsTrigger>
-          <TabsTrigger value="read" className="py-3 rounded-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          <TabsTrigger value="read" className="flex-1 py-3 rounded-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <BookOpen className={`w-4 h-4 ${iconMargin}`} />
             {t('readBeforeOrder')}
           </TabsTrigger>
