@@ -11,7 +11,7 @@ import { cn, toEnglishNumbers } from '@/lib/utils';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 
-type PaymentMethod = 'rafidain' | 'zainCash' | 'asiaCash';
+type PaymentMethod = 'rafidain' | 'zainCash' | 'asiaCash' | 'other';
 
 const WHATSAPP_NUMBER = '9647766699669';
 const EXCHANGE_RATE = 1400;
@@ -47,6 +47,12 @@ export default function PaymentMethods({ onSubmit }: PaymentMethodsProps) {
       icon: Smartphone,
       description: 'ادفع عبر آسيا سيل'
     },
+    { 
+      id: 'other', 
+      name: 'طرق دفع اخرى', 
+      icon: CreditCard,
+      description: 'طرق دفع اخرى'
+    },
   ];
 
   const getMethodName = (methodId: PaymentMethod): string => {
@@ -57,6 +63,8 @@ export default function PaymentMethods({ onSubmit }: PaymentMethodsProps) {
         return 'زين كاش';
       case 'asiaCash':
         return 'آسيا سيل';
+      case 'other':
+        return 'طرق دفع اخرى';
       default:
         return methodId;
     }
