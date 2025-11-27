@@ -151,8 +151,8 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
 
         <div dir="rtl">
           <Label className="text-sm text-muted-foreground mb-2 block text-right">{t('serviceName')}</Label>
-          <Select value={selectedService} onValueChange={setSelectedService} dir="rtl" disabled={!selectedCategory}>
-            <SelectTrigger data-testid="select-service" className="text-right" disabled={!selectedCategory}>
+          <Select value={selectedService} onValueChange={setSelectedService} dir="rtl" disabled={showCategorySelect && !selectedCategory}>
+            <SelectTrigger data-testid="select-service" className="text-right" disabled={showCategorySelect && !selectedCategory}>
               <SelectValue placeholder={t('serviceName')} />
             </SelectTrigger>
             <SelectContent className="max-h-80 w-[calc(100vw-3rem)] max-w-md" dir="rtl">
