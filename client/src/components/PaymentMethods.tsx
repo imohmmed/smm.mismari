@@ -5,12 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { 
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger
-} from '@/components/ui/accordion';
 import { CreditCard, Smartphone, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -123,39 +117,32 @@ export default function PaymentMethods({ onSubmit }: PaymentMethodsProps) {
         </Button>
       </Card>
 
-      <Card className="p-4">
-        <h3 className="font-semibold mb-3 text-right">{t('instructions')}</h3>
+      <Card className="p-4" dir="ltr">
+        <h3 className="font-semibold mb-3 text-left">{t('instructions')}</h3>
         
-        <Accordion type="single" collapsible className="w-full" dir="rtl">
-          <AccordionItem value="notes">
-            <AccordionTrigger className="text-sm flex-row-reverse">
-              <div className="flex items-center gap-2 flex-row-reverse">
-                <AlertCircle className="w-4 h-4 text-destructive" />
-                {t('importantNotes')}
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <ul className="space-y-3 text-sm text-right">
-                <li className="flex items-start gap-2 flex-row-reverse">
-                  <span className="w-2 h-2 rounded-full bg-destructive mt-1.5 shrink-0" />
-                  <span>{t('minDeposit')}: 10 دولار</span>
-                </li>
-                <li className="flex items-start gap-2 flex-row-reverse">
-                  <span className="w-2 h-2 rounded-full bg-destructive mt-1.5 shrink-0" />
-                  <span>{t('paymentNote')}</span>
-                </li>
-                <li className="flex items-start gap-2 flex-row-reverse">
-                  <span className="w-2 h-2 rounded-full bg-destructive mt-1.5 shrink-0" />
-                  <span>{t('cvcNote')}</span>
-                </li>
-                <li className="flex items-start gap-2 flex-row-reverse">
-                  <CheckCircle2 className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                  <span>{t('contactSupport')}</span>
-                </li>
-              </ul>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+        <div className="flex items-center gap-2 mb-3 text-sm font-medium">
+          <AlertCircle className="w-4 h-4 text-destructive" />
+          {t('importantNotes')}
+        </div>
+        
+        <ul className="space-y-3 text-sm text-left">
+          <li className="flex items-start gap-2">
+            <span className="w-2 h-2 rounded-full bg-destructive mt-1.5 shrink-0" />
+            <span>{t('minDeposit')}: 10 دولار</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="w-2 h-2 rounded-full bg-destructive mt-1.5 shrink-0" />
+            <span>{t('paymentNote')}</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="w-2 h-2 rounded-full bg-destructive mt-1.5 shrink-0" />
+            <span>{t('cvcNote')}</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-success mt-0.5 shrink-0" />
+            <span>{t('contactSupport')}</span>
+          </li>
+        </ul>
       </Card>
     </div>
   );
