@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Search, ShoppingCart, ListOrdered, Package, Loader2, LogIn, UserPlus } from 'lucide-react';
+import { Search, ShoppingCart, ListOrdered, Loader2, LogIn, UserPlus } from 'lucide-react';
 import { fetchServices, fetchBalance, createOrder, type Service } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import { useLocation } from 'wouter';
@@ -179,7 +179,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
       <Card className="p-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full grid grid-cols-3 mb-4">
+          <TabsList className="w-full grid grid-cols-2 mb-4">
             <TabsTrigger value="newOrder" className="flex items-center gap-2">
               <ShoppingCart className="w-4 h-4" />
               {t('newOrder')}
@@ -187,10 +187,6 @@ export default function HomePage({ onNavigate }: HomePageProps) {
             <TabsTrigger value="subscriptions" className="flex items-center gap-2">
               <ListOrdered className="w-4 h-4" />
               {t('subscriptions')}
-            </TabsTrigger>
-            <TabsTrigger value="bulkOrder" className="flex items-center gap-2">
-              <Package className="w-4 h-4" />
-              {t('bulkOrder')}
             </TabsTrigger>
           </TabsList>
 
@@ -246,12 +242,6 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           <TabsContent value="subscriptions" className="m-0">
             <div className="text-center py-8 text-muted-foreground">
               {language === 'ar' ? 'قريباً - خدمة الاشتراكات' : 'Coming soon - Subscriptions'}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="bulkOrder" className="m-0">
-            <div className="text-center py-8 text-muted-foreground">
-              {language === 'ar' ? 'قريباً - الطلب المجمع' : 'Coming soon - Bulk Order'}
             </div>
           </TabsContent>
         </Tabs>
