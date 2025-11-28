@@ -47,10 +47,13 @@ export default function BottomNavigation({ activeItem, onItemClick }: BottomNavi
 
           <button
             onClick={() => onItemClick('newOrder')}
-            className="flex items-center justify-center w-14 h-14 -mt-8 mx-2 rounded-full bg-primary text-primary-foreground shadow-lg hover-elevate active-elevate-2 shrink-0"
+            className="flex flex-col items-center justify-center -mt-5 mx-2 shrink-0"
             data-testid="button-new-order"
           >
-            <Plus className="w-7 h-7" />
+            <div className="flex items-center justify-center w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover-elevate active-elevate-2">
+              <Plus className="w-7 h-7" />
+            </div>
+            <span className="text-[10px] font-medium text-muted-foreground mt-0.5">إنشاء طلب</span>
           </button>
 
           <div className="flex items-center flex-1 justify-evenly">
