@@ -25,9 +25,10 @@ export default function OrdersPage({ onNavigate }: OrdersPageProps) {
   const orders = ordersData?.orders || [];
 
   const filteredOrders = orders.filter(order => {
+    const orderId = order.apiOrderId || order.id;
     const matchesSearch = !searchQuery || 
       order.serviceName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      order.orderId.toString().includes(searchQuery);
+      orderId.toString().includes(searchQuery);
     const matchesStatus = statusFilter === 'all' || mapOrderStatus(order.status) === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -73,21 +74,24 @@ export default function OrdersPage({ onNavigate }: OrdersPageProps) {
         </Card>
       ) : filteredOrders.length > 0 ? (
         <div className="space-y-3">
-          {filteredOrders.map(order => (
-            <OrderCard
-              key={order.orderId}
-              id={order.orderId}
-              serviceName={order.serviceName}
-              platform={detectPlatform(order.serviceName)}
-              link={order.link}
-              quantity={order.quantity}
-              startCount={order.startCount}
-              remains={order.remains}
-              status={mapOrderStatus(order.status)}
-              price={order.charge}
-              date={formatDate()}
-            />
-          ))}
+          {filteredOrders.map(order => {
+            const displayOrderId = order.apiOrderId || order.id;
+            return (
+              <OrderCard
+                key={displayOrderId}
+                id={displayOrderId}
+                serviceName={order.serviceName}
+                platform={detectPlatform(order.serviceName)}
+                link={order.link}
+                quantity={order.quantity}
+                startCount={order.startCount}
+                remains={order.remains}
+                status={mapOrderStatus(order.status)}
+                price={order.charge}
+                date={formatDate()}
+              />
+            );
+          })}
         </div>
       ) : (
         <Card className="p-8 text-center text-muted-foreground">

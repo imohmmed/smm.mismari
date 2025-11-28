@@ -30,7 +30,9 @@ export interface ServicesResponse {
 }
 
 export interface Order {
-  orderId: number;
+  id: number;
+  orderId?: number;
+  apiOrderId?: number;
   serviceId: number;
   serviceName: string;
   link: string;

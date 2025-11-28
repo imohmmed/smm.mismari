@@ -88,12 +88,14 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const createOrderMutation = useMutation({
     mutationFn: createOrder,
     onSuccess: (data) => {
+      const displayOrderId = data.order.apiOrderId || data.order.id;
       toast({
         title: language === 'ar' ? 'تم إنشاء الطلب بنجاح' : 'Order created successfully',
-        description: `${language === 'ar' ? 'رقم الطلب' : 'Order ID'}: ${data.order.orderId}`,
+        description: `${language === 'ar' ? 'رقم الطلب' : 'Order ID'}: ${displayOrderId}`,
       });
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/balance'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
     },
     onError: (error) => {
       toast({
