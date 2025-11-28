@@ -103,6 +103,16 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
     : services;
 
   const currentService = services.find(s => s.id.toString() === selectedService);
+  
+  // Check if this is a single-quantity service (like Discord boosts)
+  const isSingleQuantityService = currentService?.maxQuantity === 1;
+
+  // Auto-set quantity to 1 when selecting a single-quantity service
+  useEffect(() => {
+    if (isSingleQuantityService && quantity !== '1') {
+      setQuantity('1');
+    }
+  }, [isSingleQuantityService, currentService]);
 
   useEffect(() => {
     if (currentService && quantity) {
@@ -199,25 +209,28 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
           />
         </div>
 
-        <div className="w-1/2">
-          <Label className="text-sm text-muted-foreground mb-2 block">{t('quantity')}</Label>
-          <Input 
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            value={quantity}
-            onChange={(e) => setQuantity(toEnglishNumbers(e.target.value).replace(/\D/g, ''))}
-            placeholder={currentService ? `${currentService.minQuantity} - ${currentService.maxQuantity}` : '1000'}
-            dir="ltr"
-            className="text-left"
-            data-testid="input-quantity"
-          />
-          {currentService && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {t('min')}: {currentService.minQuantity.toLocaleString()} | {t('max')}: {currentService.maxQuantity.toLocaleString()}
-            </p>
-          )}
-        </div>
+        {/* Hide quantity input for single-quantity services like Discord boosts */}
+        {!isSingleQuantityService && (
+          <div className="w-1/2">
+            <Label className="text-sm text-muted-foreground mb-2 block">{t('quantity')}</Label>
+            <Input 
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={quantity}
+              onChange={(e) => setQuantity(toEnglishNumbers(e.target.value).replace(/\D/g, ''))}
+              placeholder={currentService ? `${currentService.minQuantity} - ${currentService.maxQuantity}` : '1000'}
+              dir="ltr"
+              className="text-left"
+              data-testid="input-quantity"
+            />
+            {currentService && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {t('min')}: {currentService.minQuantity.toLocaleString()} | {t('max')}: {currentService.maxQuantity.toLocaleString()}
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <Card className="p-3 bg-muted/50">
