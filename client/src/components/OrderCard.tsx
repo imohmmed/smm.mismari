@@ -142,7 +142,7 @@ export default function OrderCard({
         {/* Time / Date */}
         <div className="bg-muted/30 rounded-lg p-3 border border-border/30">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">وقت البدء:</span>
+            <span className="text-xs text-muted-foreground">وقت:</span>
             <Timer className="w-4 h-4 text-primary" />
           </div>
           <p className="text-sm font-medium mt-1">{date}</p>
