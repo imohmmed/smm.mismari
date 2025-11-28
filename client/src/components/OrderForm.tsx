@@ -78,7 +78,7 @@ const extractExecutionTime = (serviceName: string, language: string): string => 
     return language === 'ar' ? 'فوري' : 'Instant';
   }
   
-  return language === 'ar' ? '0-1 ساعة' : '0-1 hour';
+  return language === 'ar' ? '1-0 ساعة' : '0-1 hour';
 };
 
 interface OrderFormProps {
@@ -370,7 +370,7 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
               <span className="text-xs">{t('executionTime')}</span>
             </div>
             <p className="font-semibold">
-              {currentService ? extractExecutionTime(currentService.name, language) : (language === 'ar' ? '0-1 ساعة' : '0-1 hour')}
+              {currentService ? extractExecutionTime(currentService.name, language) : (language === 'ar' ? '1-0 ساعة' : '0-1 hour')}
             </p>
           </Card>
 
