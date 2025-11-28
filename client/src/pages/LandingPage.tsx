@@ -19,7 +19,10 @@ import {
   Lock,
   Code,
   Headphones,
-  TrendingUp
+  TrendingUp,
+  Clock,
+  Star,
+  MessageCircle
 } from 'lucide-react';
 import { 
   SiInstagram, 
@@ -39,6 +42,16 @@ import { motion } from 'framer-motion';
 
 interface LandingPageProps {
   onNavigate: (page: string) => void;
+}
+
+interface Subscription {
+  id: number;
+  name: string;
+  description: string;
+  imageUrl: string | null;
+  deliveryTime: string;
+  price: number;
+  isActive: number;
 }
 
 const fadeInUp = {
@@ -74,10 +87,21 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
     queryKey: ['/api/stats'],
   });
 
+  const { data: subscriptionsData } = useQuery<{ subscriptions: Subscription[] }>({
+    queryKey: ['/api/subscriptions'],
+  });
+
+  const subscriptions = subscriptionsData?.subscriptions || [];
+
   const stats = {
     orders: statsData?.orders ?? 0,
     users: statsData?.users ?? 0,
     services: statsData?.services ?? 0
+  };
+
+  const handleContactSubscription = (subscription: Subscription) => {
+    const message = `مرحباً، أريد الاستفسار عن الاشتراك: ${subscription.name}`;
+    window.open(`https://wa.me/9647766699669?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   const platforms = [
@@ -316,6 +340,81 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
           </motion.div>
         </Card>
       </motion.div>
+
+      {/* Subscriptions Section */}
+      {subscriptions.length > 0 && (
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          variants={fadeInUp}
+          transition={{ duration: 0.5 }}
+        >
+          <Card className="p-4">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Star className="w-5 h-5 text-yellow-500" />
+              <h3 className="font-semibold text-center">الباقات والاشتراكات</h3>
+              <Star className="w-5 h-5 text-yellow-500" />
+            </div>
+            <motion.div 
+              className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+            >
+              {subscriptions.map((subscription, index) => (
+                <motion.div
+                  key={subscription.id}
+                  variants={fadeInScale}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                >
+                  <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col">
+                    {subscription.imageUrl && (
+                      <div className="aspect-video bg-muted overflow-hidden">
+                        <img
+                          src={subscription.imageUrl}
+                          alt={subscription.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+                    <div className="p-4 space-y-3 flex-1 flex flex-col">
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="font-bold text-lg">{subscription.name}</h4>
+                        <Badge variant="secondary" className="bg-primary/10 text-primary border-0 shrink-0">
+                          ${subscription.price.toFixed(2)}
+                        </Badge>
+                      </div>
+                      
+                      <p className="text-sm text-muted-foreground flex-1">
+                        {subscription.description}
+                      </p>
+                      
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Clock className="w-4 h-4" />
+                        <span>مدة التسليم: {subscription.deliveryTime}</span>
+                      </div>
+                      
+                      <Button
+                        className="w-full gap-2 mt-auto bg-green-600 hover:bg-green-700"
+                        onClick={() => handleContactSubscription(subscription)}
+                        data-testid={`button-subscription-${subscription.id}`}
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        تواصل عبر واتساب
+                      </Button>
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </motion.div>
+          </Card>
+        </motion.div>
+      )}
 
       {/* How It Works */}
       <motion.div
