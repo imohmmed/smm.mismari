@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createContext, useContext, useState, type ReactNode } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
 interface User {
@@ -28,73 +28,63 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   const { data, isLoading, refetch } = useQuery<{ user?: User }>({
     queryKey: ["/api/auth/me"],
     retry: false,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const user = data?.user || null;
   const isAuthenticated = !!user;
   const isAdmin = user?.role === "admin";
 
-  const loginMutation = useMutation({
-    mutationFn: async ({ email, password }: { email: string; password: string }) => {
-      const res = await apiRequest("POST", "/api/auth/login", { email, password });
-      return res.json();
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
-      await refetch();
-    },
-  });
-
-  const registerMutation = useMutation({
-    mutationFn: async (data: { username: string; email: string; password: string; phone?: string }) => {
-      const res = await apiRequest("POST", "/api/auth/register", data);
-      return res.json();
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
-      await refetch();
-    },
-  });
-
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/auth/logout", {});
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
-      queryClient.clear();
-    },
-  });
-
   const login = async (email: string, password: string) => {
-    const result = await loginMutation.mutateAsync({ email, password });
-    if (result.error) {
-      throw new Error(result.error);
+    setIsAuthenticating(true);
+    try {
+      const res = await apiRequest("POST", "/api/auth/login", { email, password });
+      const result = await res.json();
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      queryClient.setQueryData(["/api/auth/me"], { user: result.user });
+      await refetch();
+    } finally {
+      setIsAuthenticating(false);
     }
   };
 
   const register = async (username: string, email: string, password: string, phone?: string) => {
-    const result = await registerMutation.mutateAsync({ username, email, password, phone });
-    if (result.error) {
-      throw new Error(Array.isArray(result.error) ? result.error[0].message : result.error);
+    setIsAuthenticating(true);
+    try {
+      const res = await apiRequest("POST", "/api/auth/register", { username, email, password, phone });
+      const result = await res.json();
+      if (result.error) {
+        throw new Error(Array.isArray(result.error) ? result.error[0].message : result.error);
+      }
+      queryClient.setQueryData(["/api/auth/me"], { user: result.user });
+      await refetch();
+    } finally {
+      setIsAuthenticating(false);
     }
   };
 
   const logout = async () => {
-    await logoutMutation.mutateAsync();
+    try {
+      await apiRequest("POST", "/api/auth/logout", {});
+    } finally {
+      queryClient.setQueryData(["/api/auth/me"], { user: null });
+      queryClient.clear();
+    }
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        isLoading,
+        isLoading: isLoading || isAuthenticating,
         isAuthenticated,
         isAdmin,
         login,

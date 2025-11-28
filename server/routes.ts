@@ -109,15 +109,21 @@ export async function registerRoutes(
       req.session.userId = user.id;
       req.session.role = user.role;
       
-      res.json({
-        success: true,
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          balance: user.balance,
-          role: user.role,
-        },
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ error: "Session save failed" });
+        }
+        res.json({
+          success: true,
+          user: {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            balance: user.balance,
+            role: user.role,
+          },
+        });
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -167,15 +173,21 @@ export async function registerRoutes(
       req.session.userId = user.id;
       req.session.role = user.role;
 
-      res.json({
-        success: true,
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          balance: user.balance,
-          role: user.role,
-        },
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ error: "Session save failed" });
+        }
+        res.json({
+          success: true,
+          user: {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            balance: user.balance,
+            role: user.role,
+          },
+        });
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
