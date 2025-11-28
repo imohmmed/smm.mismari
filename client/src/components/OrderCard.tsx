@@ -11,7 +11,7 @@ import {
   SiX, 
   SiTelegram 
 } from 'react-icons/si';
-import { Clock, CheckCircle2, XCircle, Loader2, RotateCcw, MessageCircle, Calendar, Link2, AlertCircle } from 'lucide-react';
+import { Clock, CheckCircle2, XCircle, Loader2, RotateCcw, MessageCircle, Calendar, Link2, AlertCircle, Package, Timer, DollarSign, Hash } from 'lucide-react';
 
 type OrderStatus = 'pending' | 'inProgress' | 'completed' | 'cancelled' | 'partial' | 'processing' | 'refunded';
 
@@ -89,82 +89,120 @@ export default function OrderCard({
     }
   };
 
-  const truncateLink = (url: string, maxLength: number = 40) => {
+  const truncateLink = (url: string, maxLength: number = 50) => {
     if (url.length <= maxLength) return url;
     return url.substring(0, maxLength) + '...';
   };
 
   return (
-    <Card className="p-4 hover-elevate">
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex items-center justify-center">
-            <PlatformIcon className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <Badge className="bg-primary text-primary-foreground text-xs mb-1">
-              {id}
-            </Badge>
-            <p className="font-semibold text-foreground text-sm leading-tight">{serviceName}</p>
-          </div>
-        </div>
-      </div>
-
-      {link && (
-        <div className="mb-3 p-2 bg-muted/50 rounded-md">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Link2 className="w-3 h-3 flex-shrink-0" />
-            <a 
-              href={link} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-primary hover:underline break-all"
-              data-testid={`link-order-${id}`}
-            >
-              {truncateLink(link)}
-            </a>
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-2 mb-3">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">الكمية</span>
-          <span className="font-medium">{quantity.toLocaleString()}</span>
-        </div>
-        {safeStartCount > 0 && (
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">عداد البدء</span>
-            <span className="font-medium">{safeStartCount.toLocaleString()}</span>
-          </div>
-        )}
-        {safeRemains > 0 && (
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">المتبقي</span>
-            <span className="font-medium">{safeRemains.toLocaleString()}</span>
-          </div>
-        )}
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">المبلغ</span>
-          <span className="font-bold text-primary">${price.toFixed(4)}</span>
-        </div>
-      </div>
-
-      {(status === 'inProgress' || status === 'processing') && safeRemains > 0 && (
-        <Progress value={progress} className="h-2 mb-3" />
-      )}
-
-      <div className="flex items-center justify-between py-2 border-t border-border">
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+    <Card className="p-4 hover-elevate overflow-visible">
+      {/* Header with Order ID and Date */}
+      <div className="flex items-center justify-between mb-3">
+        <Badge className="bg-primary text-primary-foreground text-sm px-3 py-1">
+          {id}
+        </Badge>
+        <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
           <Calendar className="w-3 h-3" />
           <span>{date}</span>
         </div>
-        <Badge variant="secondary" className={`${statusInfo.bgColor} ${statusInfo.color} border-0`}>
+      </div>
+
+      {/* Service Name */}
+      <div className="flex items-start gap-3 mb-3">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex items-center justify-center flex-shrink-0">
+          <PlatformIcon className="w-4 h-4 text-white" />
+        </div>
+        <p className="font-medium text-foreground text-sm leading-relaxed flex-1">{serviceName}</p>
+      </div>
+
+      {/* Status Badge */}
+      <div className="flex items-center gap-2 mb-3">
+        <Button size="sm" variant="ghost" className="p-2 h-8 w-8">
+          <RotateCcw className="w-4 h-4 text-primary" />
+        </Button>
+        <Button size="sm" variant="ghost" className="p-2 h-8 w-8">
+          <MessageCircle className="w-4 h-4 text-primary" />
+        </Button>
+        <Badge variant="secondary" className={`${statusInfo.bgColor} ${statusInfo.color} border-0 px-3 py-1`}>
           <StatusIcon className={`w-3 h-3 ml-1 ${(status === 'inProgress' || status === 'processing') ? 'animate-spin' : ''}`} />
           {statusInfo.label}
         </Badge>
       </div>
 
+      {/* Link */}
+      {link && (
+        <div className="mb-3 p-2 bg-muted/30 rounded-md border border-border/50">
+          <a 
+            href={link} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-primary hover:underline text-xs break-all"
+            data-testid={`link-order-${id}`}
+          >
+            {truncateLink(link)}
+          </a>
+        </div>
+      )}
+
+      {/* Stats Grid - Similar to amazingsmm.com */}
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        {/* Time / Date */}
+        <div className="bg-muted/30 rounded-lg p-3 border border-border/30">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">وقت:</span>
+            <Timer className="w-4 h-4 text-primary" />
+          </div>
+          <p className="text-sm font-medium mt-1">{date}</p>
+        </div>
+
+        {/* Amount / Price */}
+        <div className="bg-muted/30 rounded-lg p-3 border border-border/30">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">المبلغ:</span>
+            <DollarSign className="w-4 h-4 text-primary" />
+          </div>
+          <p className="text-sm font-bold text-primary mt-1">{price.toFixed(4)}</p>
+        </div>
+
+        {/* Quantity */}
+        <div className="bg-muted/30 rounded-lg p-3 border border-border/30">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">الكمية:</span>
+            <Package className="w-4 h-4 text-primary" />
+          </div>
+          <p className="text-sm font-medium mt-1">{quantity.toLocaleString()}</p>
+        </div>
+
+        {/* Start Count */}
+        <div className="bg-muted/30 rounded-lg p-3 border border-border/30">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">عداد البدء:</span>
+            <Hash className="w-4 h-4 text-primary" />
+          </div>
+          <p className="text-sm font-medium mt-1">{safeStartCount.toLocaleString()}</p>
+        </div>
+      </div>
+
+      {/* Remaining - Full Width */}
+      <div className="bg-muted/30 rounded-lg p-3 border border-border/30 mb-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">المتبقي:</span>
+          <Clock className="w-4 h-4 text-primary" />
+        </div>
+        <p className="text-sm font-medium mt-1">{safeRemains.toLocaleString()}</p>
+      </div>
+
+      {/* Progress Bar */}
+      {(status === 'inProgress' || status === 'processing') && quantity > 0 && (
+        <div className="mb-3">
+          <Progress value={progress} className="h-2" />
+          <p className="text-xs text-muted-foreground text-center mt-1">
+            {Math.round(progress)}% مكتمل
+          </p>
+        </div>
+      )}
+
+      {/* Action Buttons */}
       <div className="flex items-center justify-center gap-2 pt-2 border-t border-border">
         <Button
           size="sm"
