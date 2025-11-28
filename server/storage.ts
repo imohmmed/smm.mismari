@@ -13,7 +13,7 @@ import {
   subscriptions
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, like, or, desc, count, sum } from "drizzle-orm";
+import { eq, like, or, desc, count, sum, sql, isNotNull, notInArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 const SALT_ROUNDS = 10;
@@ -36,8 +36,9 @@ export interface IStorage {
   
   getOrders(userId: string): Promise<Order[]>;
   getAllOrders(): Promise<Order[]>;
+  getOrdersWithApiId(): Promise<Order[]>;
   createOrder(order: InsertOrder): Promise<Order>;
-  updateOrderStatus(orderId: number, status: string, apiOrderId?: number, remains?: number): Promise<Order | undefined>;
+  updateOrderStatus(orderId: number, status: string, apiOrderId?: number, startCount?: number, remains?: number): Promise<Order | undefined>;
   countOrders(): Promise<number>;
   getCompletedOrdersCount(userId: string): Promise<number>;
   
@@ -185,6 +186,12 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(orders).orderBy(desc(orders.createdAt));
   }
 
+  async getOrdersWithApiId(): Promise<Order[]> {
+    return db.select().from(orders)
+      .where(sql`${orders.apiOrderId} IS NOT NULL AND ${orders.status} NOT IN ('Completed', 'Cancelled', 'Partial')`)
+      .orderBy(desc(orders.createdAt));
+  }
+
   async countOrders(): Promise<number> {
     const [result] = await db.select({ count: count() }).from(orders);
     return result?.count || 0;
@@ -202,9 +209,10 @@ export class DatabaseStorage implements IStorage {
     return newOrder;
   }
 
-  async updateOrderStatus(orderId: number, status: string, apiOrderId?: number, remains?: number): Promise<Order | undefined> {
+  async updateOrderStatus(orderId: number, status: string, apiOrderId?: number, startCount?: number, remains?: number): Promise<Order | undefined> {
     const updateData: Partial<Order> = { status };
     if (apiOrderId !== undefined) updateData.apiOrderId = apiOrderId;
+    if (startCount !== undefined) updateData.startCount = startCount;
     if (remains !== undefined) updateData.remains = remains;
     
     const [updated] = await db.update(orders)

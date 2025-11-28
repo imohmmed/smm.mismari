@@ -11,9 +11,9 @@ import {
   SiX, 
   SiTelegram 
 } from 'react-icons/si';
-import { Clock, CheckCircle2, XCircle, Loader2, RotateCcw, MessageCircle, Calendar } from 'lucide-react';
+import { Clock, CheckCircle2, XCircle, Loader2, RotateCcw, MessageCircle, Calendar, Link2, AlertCircle } from 'lucide-react';
 
-type OrderStatus = 'pending' | 'inProgress' | 'completed' | 'cancelled' | 'partial';
+type OrderStatus = 'pending' | 'inProgress' | 'completed' | 'cancelled' | 'partial' | 'processing' | 'refunded';
 
 interface OrderCardProps {
   id: number;
@@ -39,12 +39,14 @@ const platformIcons: Record<string, typeof SiInstagram> = {
   telegram: SiTelegram,
 };
 
-const statusConfig: Record<OrderStatus, { color: string; icon: typeof CheckCircle2; bgColor: string }> = {
-  pending: { color: 'text-yellow-500', icon: Clock, bgColor: 'bg-yellow-500/10' },
-  inProgress: { color: 'text-blue-500', icon: Loader2, bgColor: 'bg-blue-500/10' },
-  completed: { color: 'text-green-500', icon: CheckCircle2, bgColor: 'bg-green-500/10' },
-  cancelled: { color: 'text-red-500', icon: XCircle, bgColor: 'bg-red-500/10' },
-  partial: { color: 'text-orange-500', icon: Clock, bgColor: 'bg-orange-500/10' },
+const statusConfig: Record<OrderStatus, { color: string; icon: typeof CheckCircle2; bgColor: string; label: string }> = {
+  pending: { color: 'text-yellow-500', icon: Clock, bgColor: 'bg-yellow-500/10', label: 'قيد الانتظار' },
+  processing: { color: 'text-purple-500', icon: Loader2, bgColor: 'bg-purple-500/10', label: 'قيد المعالجة' },
+  inProgress: { color: 'text-blue-500', icon: Loader2, bgColor: 'bg-blue-500/10', label: 'جاري التنفيذ' },
+  completed: { color: 'text-green-500', icon: CheckCircle2, bgColor: 'bg-green-500/10', label: 'مكتمل' },
+  cancelled: { color: 'text-red-500', icon: XCircle, bgColor: 'bg-red-500/10', label: 'ملغي' },
+  partial: { color: 'text-orange-500', icon: AlertCircle, bgColor: 'bg-orange-500/10', label: 'ملغي بشكل جزئي' },
+  refunded: { color: 'text-cyan-500', icon: RotateCcw, bgColor: 'bg-cyan-500/10', label: 'مسترد' },
 };
 
 const WHATSAPP_NUMBER = '9647766699669';
@@ -65,10 +67,9 @@ export default function OrderCard({
 }: OrderCardProps) {
   const { t } = useLanguage();
   const PlatformIcon = platformIcons[platform.toLowerCase()] || SiInstagram;
-  const statusInfo = statusConfig[status];
+  const statusInfo = statusConfig[status] || statusConfig.pending;
   const StatusIcon = statusInfo.icon;
   
-  // Handle null/undefined values with defaults
   const safeStartCount = startCount ?? 0;
   const safeRemains = remains ?? 0;
   
@@ -88,6 +89,11 @@ export default function OrderCard({
     }
   };
 
+  const truncateLink = (url: string, maxLength: number = 40) => {
+    if (url.length <= maxLength) return url;
+    return url.substring(0, maxLength) + '...';
+  };
+
   return (
     <Card className="p-4 hover-elevate">
       <div className="flex items-start justify-between gap-3 mb-3">
@@ -104,9 +110,26 @@ export default function OrderCard({
         </div>
       </div>
 
+      {link && (
+        <div className="mb-3 p-2 bg-muted/50 rounded-md">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Link2 className="w-3 h-3 flex-shrink-0" />
+            <a 
+              href={link} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-primary hover:underline break-all"
+              data-testid={`link-order-${id}`}
+            >
+              {truncateLink(link)}
+            </a>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-2 mb-3">
         <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">{t('quantity')}</span>
+          <span className="text-muted-foreground">الكمية</span>
           <span className="font-medium">{quantity.toLocaleString()}</span>
         </div>
         {safeStartCount > 0 && (
@@ -121,9 +144,13 @@ export default function OrderCard({
             <span className="font-medium">{safeRemains.toLocaleString()}</span>
           </div>
         )}
+        <div className="flex justify-between text-sm">
+          <span className="text-muted-foreground">المبلغ</span>
+          <span className="font-bold text-primary">${price.toFixed(4)}</span>
+        </div>
       </div>
 
-      {status === 'inProgress' && (
+      {(status === 'inProgress' || status === 'processing') && safeRemains > 0 && (
         <Progress value={progress} className="h-2 mb-3" />
       )}
 
@@ -132,38 +159,34 @@ export default function OrderCard({
           <Calendar className="w-3 h-3" />
           <span>{date}</span>
         </div>
-        <span className="font-bold text-primary">${price.toFixed(4)}</span>
+        <Badge variant="secondary" className={`${statusInfo.bgColor} ${statusInfo.color} border-0`}>
+          <StatusIcon className={`w-3 h-3 ml-1 ${(status === 'inProgress' || status === 'processing') ? 'animate-spin' : ''}`} />
+          {statusInfo.label}
+        </Badge>
       </div>
 
-      <div className="flex items-center justify-between pt-2 border-t border-border">
-        <Badge variant="secondary" className={`${statusInfo.bgColor} ${statusInfo.color} border-0`}>
-          <StatusIcon className={`w-3 h-3 ml-1 ${status === 'inProgress' ? 'animate-spin' : ''}`} />
-          {t(status)}
-        </Badge>
-        
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1 text-xs"
-            onClick={handleRepeat}
-            disabled={!serviceId}
-            data-testid={`button-repeat-order-${id}`}
-          >
-            <RotateCcw className="w-3 h-3" />
-            تكرار
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1 text-xs"
-            onClick={handleSupport}
-            data-testid={`button-support-order-${id}`}
-          >
-            <MessageCircle className="w-3 h-3" />
-            الدعم
-          </Button>
-        </div>
+      <div className="flex items-center justify-center gap-2 pt-2 border-t border-border">
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1 text-xs flex-1"
+          onClick={handleRepeat}
+          disabled={!serviceId}
+          data-testid={`button-repeat-order-${id}`}
+        >
+          <RotateCcw className="w-3 h-3" />
+          تكرار
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1 text-xs flex-1"
+          onClick={handleSupport}
+          data-testid={`button-support-order-${id}`}
+        >
+          <MessageCircle className="w-3 h-3" />
+          الدعم
+        </Button>
       </div>
     </Card>
   );

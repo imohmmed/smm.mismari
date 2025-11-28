@@ -12,10 +12,11 @@ interface OrdersFilterProps {
 const statusOptions = [
   { value: 'all', label: 'الكل' },
   { value: 'pending', label: 'قيد الانتظار' },
+  { value: 'processing', label: 'قيد المعالجة' },
   { value: 'inProgress', label: 'جاري التنفيذ' },
   { value: 'completed', label: 'مكتمل' },
   { value: 'partial', label: 'ملغي بشكل جزئي' },
-  { value: 'processing', label: 'قيد المعالجة' },
+  { value: 'refunded', label: 'مسترد' },
   { value: 'cancelled', label: 'ملغي' },
 ];
 

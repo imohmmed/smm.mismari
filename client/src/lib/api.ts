@@ -127,18 +127,21 @@ export async function fetchCategories(): Promise<{ categories: string[] }> {
 }
 
 // Map API status to UI status
-export function mapOrderStatus(status: string): 'pending' | 'inProgress' | 'completed' | 'cancelled' | 'partial' {
+export function mapOrderStatus(status: string): 'pending' | 'inProgress' | 'completed' | 'cancelled' | 'partial' | 'processing' | 'refunded' {
   switch (status) {
     case 'Pending':
-    case 'Processing':
       return 'pending';
+    case 'Processing':
+      return 'processing';
     case 'In progress':
       return 'inProgress';
     case 'Completed':
       return 'completed';
     case 'Canceled':
-    case 'Refunded':
+    case 'Cancelled':
       return 'cancelled';
+    case 'Refunded':
+      return 'refunded';
     case 'Partial':
       return 'partial';
     default:

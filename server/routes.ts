@@ -794,14 +794,119 @@ export async function registerRoutes(
     }
   });
 
+  // Helper function to map API status to our internal status
+  function mapApiStatus(apiStatus: string): string {
+    const statusMap: Record<string, string> = {
+      'Pending': 'Pending',
+      'Processing': 'Processing',
+      'In progress': 'In progress',
+      'Completed': 'Completed',
+      'Partial': 'Partial',
+      'Canceled': 'Cancelled',
+      'Cancelled': 'Cancelled',
+      'Refunded': 'Refunded',
+    };
+    return statusMap[apiStatus] || apiStatus;
+  }
+  
+  // Helper to safely parse numbers, returns undefined for invalid values
+  function safeParseInt(value: string | undefined | null): number | undefined {
+    if (value === undefined || value === null || value === '') return undefined;
+    const parsed = parseInt(value);
+    return isFinite(parsed) ? parsed : undefined;
+  }
+
   app.get("/api/orders", requireAuth, async (req: Request, res: Response) => {
     try {
       const userId = req.session.userId!;
-      const orders = await storage.getOrders(userId);
-      res.json({ orders, total: orders.length });
+      let userOrders = await storage.getOrders(userId);
+      
+      // Sync status for orders with apiOrderId that are not in terminal states
+      const ordersToSync = userOrders.filter(
+        o => o.apiOrderId && !['Completed', 'Cancelled', 'Partial', 'Refunded'].includes(o.status)
+      );
+      
+      // Sync up to 5 orders at a time to avoid overwhelming the API
+      const ordersToSyncLimited = ordersToSync.slice(0, 5);
+      
+      if (ordersToSyncLimited.length > 0) {
+        try {
+          const api = getAmazingSmmApi();
+          
+          // Fetch status for each order individually (more reliable than bulk)
+          const syncPromises = ordersToSyncLimited.map(async (order) => {
+            try {
+              const apiStatus = await api.getOrderStatus(order.apiOrderId!);
+              if (apiStatus && apiStatus.status) {
+                const newStatus = mapApiStatus(apiStatus.status);
+                const startCount = safeParseInt(apiStatus.start_count);
+                const remains = safeParseInt(apiStatus.remains);
+                
+                // Only update if there's a meaningful change
+                const statusChanged = newStatus !== order.status;
+                const remainsChanged = remains !== undefined && remains !== order.remains;
+                const startCountChanged = startCount !== undefined && startCount !== order.startCount;
+                
+                if (statusChanged || remainsChanged || startCountChanged) {
+                  await storage.updateOrderStatus(order.id, newStatus, undefined, startCount, remains);
+                }
+              }
+            } catch (orderSyncError) {
+              console.error(`Error syncing order ${order.apiOrderId}:`, orderSyncError);
+              // Continue with other orders
+            }
+          });
+          
+          await Promise.all(syncPromises);
+          
+          // Refetch orders after sync
+          userOrders = await storage.getOrders(userId);
+        } catch (syncError) {
+          console.error("Error syncing order statuses:", syncError);
+          // Continue with existing orders if sync fails
+        }
+      }
+      
+      res.json({ orders: userOrders, total: userOrders.length });
     } catch (error) {
       console.error("Error fetching orders:", error);
       res.status(500).json({ error: "Failed to fetch orders" });
+    }
+  });
+
+  // Manual sync endpoint for a single order
+  app.post("/api/orders/:id/sync", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      const userId = req.session.userId!;
+      
+      const userOrders = await storage.getOrders(userId);
+      const order = userOrders.find(o => o.id === orderId);
+      
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+      
+      if (!order.apiOrderId) {
+        return res.status(400).json({ error: "Order has no API ID" });
+      }
+      
+      const api = getAmazingSmmApi();
+      const apiStatus = await api.getOrderStatus(order.apiOrderId);
+      
+      if (apiStatus && apiStatus.status) {
+        const newStatus = mapApiStatus(apiStatus.status);
+        const startCount = safeParseInt(apiStatus.start_count);
+        const remains = safeParseInt(apiStatus.remains);
+        
+        const updated = await storage.updateOrderStatus(order.id, newStatus, undefined, startCount, remains);
+        res.json({ success: true, order: updated, apiStatus });
+      } else {
+        res.json({ success: false, error: "Could not fetch status from API" });
+      }
+    } catch (error) {
+      console.error("Error syncing order status:", error);
+      res.status(500).json({ error: "Failed to sync order status" });
     }
   });
 

@@ -20,11 +20,13 @@ export default function OrdersPage({ onNavigate, onRepeatOrder }: OrdersPageProp
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const { data: ordersData, isLoading, error } = useQuery({
+  const { data: ordersData, isLoading, error, refetch } = useQuery({
     queryKey: ['/api/orders'],
     queryFn: fetchOrders,
     enabled: !!user,
     retry: false,
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    refetchIntervalInBackground: false, // Don't refetch when tab is not visible
   });
 
   const orders = ordersData?.orders || [];
