@@ -42,6 +42,7 @@ export interface Order {
   startCount?: number;
   remains?: number;
   currency?: string;
+  createdAt?: string;
 }
 
 export interface OrdersResponse {

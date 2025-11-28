@@ -20,7 +20,7 @@ const statusOptions = [
 ];
 
 export default function OrdersFilter({ onSearch, onFilterChange }: OrdersFilterProps) {
-  const [showFilter, setShowFilter] = useState(true);
+  const [showFilter, setShowFilter] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
 

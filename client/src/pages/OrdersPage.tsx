@@ -7,13 +7,16 @@ import EmptyState from '@/components/EmptyState';
 import { Card } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { fetchOrders, mapOrderStatus, type Order } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 interface OrdersPageProps {
   onNavigate: (page: string) => void;
+  onRepeatOrder?: (serviceId: number, link: string, quantity: number) => void;
 }
 
-export default function OrdersPage({ onNavigate }: OrdersPageProps) {
+export default function OrdersPage({ onNavigate, onRepeatOrder }: OrdersPageProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -33,9 +36,27 @@ export default function OrdersPage({ onNavigate }: OrdersPageProps) {
     return matchesSearch && matchesStatus;
   });
 
-  const formatDate = () => {
-    const now = new Date();
-    return `${now.getDate().toString().padStart(2, '0')}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getFullYear()}`;
+  const formatDate = (dateString?: string) => {
+    const date = dateString ? new Date(dateString) : new Date();
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${day}-${month}-${year} ${hours}:${minutes}`;
+  };
+
+  const handleRepeatOrder = (serviceId: number, link: string, quantity: number) => {
+    if (onRepeatOrder) {
+      onRepeatOrder(serviceId, link, quantity);
+      onNavigate('newOrder');
+    } else {
+      toast({
+        title: 'تكرار الطلب',
+        description: 'يرجى الانتقال لصفحة الطلب الجديد',
+      });
+      onNavigate('newOrder');
+    }
   };
 
   const detectPlatform = (name: string): string => {
@@ -80,6 +101,7 @@ export default function OrdersPage({ onNavigate }: OrdersPageProps) {
               <OrderCard
                 key={displayOrderId}
                 id={displayOrderId}
+                serviceId={order.serviceId}
                 serviceName={order.serviceName}
                 platform={detectPlatform(order.serviceName)}
                 link={order.link}
@@ -88,7 +110,8 @@ export default function OrdersPage({ onNavigate }: OrdersPageProps) {
                 remains={order.remains}
                 status={mapOrderStatus(order.status)}
                 price={order.charge}
-                date={formatDate()}
+                date={formatDate(order.createdAt)}
+                onRepeat={handleRepeatOrder}
               />
             );
           })}
