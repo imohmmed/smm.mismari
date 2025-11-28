@@ -17,7 +17,8 @@ import {
   Loader2,
   Check,
   Wallet,
-  CreditCard
+  CreditCard,
+  Package
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -25,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import AdminUsers from "./AdminUsers";
 import AdminOrders from "./AdminOrders";
+import AdminSubscriptions from "./AdminSubscriptions";
 
 interface AdminStats {
   users: number;
@@ -261,10 +263,14 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="users" className="gap-2" data-testid="tab-users">
               <Users className="w-4 h-4" />
               {t("users")}
+            </TabsTrigger>
+            <TabsTrigger value="subscriptions" className="gap-2" data-testid="tab-subscriptions">
+              <Package className="w-4 h-4" />
+              الاشتراكات
             </TabsTrigger>
             <TabsTrigger value="orders" className="gap-2" data-testid="tab-orders">
               <ShoppingCart className="w-4 h-4" />
@@ -274,6 +280,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="users">
             <AdminUsers />
+          </TabsContent>
+
+          <TabsContent value="subscriptions">
+            <AdminSubscriptions />
           </TabsContent>
 
           <TabsContent value="orders">
