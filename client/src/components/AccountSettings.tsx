@@ -79,18 +79,23 @@ export default function AccountSettings({ user, onLogout }: AccountSettingsProps
 
     setIsUpdating(true);
     try {
-      const res = await apiRequest("POST", "/api/auth/update-profile", {
-        password: confirmPasswordValue,
-        username,
-        email,
-        phone,
+      const res = await fetch("/api/auth/update-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          password: confirmPasswordValue,
+          username,
+          email,
+          phone,
+        }),
+        credentials: "include",
       });
       const data = await res.json();
       
-      if (data.error) {
+      if (!res.ok || data.error) {
         toast({
           title: "خطأ",
-          description: data.error,
+          description: data.error || "فشل تحديث البيانات",
           variant: "destructive",
         });
       } else {
@@ -105,7 +110,7 @@ export default function AccountSettings({ user, onLogout }: AccountSettingsProps
     } catch (error: any) {
       toast({
         title: "خطأ",
-        description: "فشل تحديث البيانات",
+        description: "حدث خطأ في الاتصال",
         variant: "destructive",
       });
     } finally {
@@ -143,16 +148,21 @@ export default function AccountSettings({ user, onLogout }: AccountSettingsProps
 
     setIsChangingPassword(true);
     try {
-      const res = await apiRequest("POST", "/api/auth/change-password", {
-        currentPassword,
-        newPassword,
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
+        credentials: "include",
       });
       const data = await res.json();
       
-      if (data.error) {
+      if (!res.ok || data.error) {
         toast({
           title: "خطأ",
-          description: data.error,
+          description: data.error || "فشل تغيير كلمة المرور",
           variant: "destructive",
         });
       } else {
@@ -167,7 +177,7 @@ export default function AccountSettings({ user, onLogout }: AccountSettingsProps
     } catch (error: any) {
       toast({
         title: "خطأ",
-        description: "فشل تغيير كلمة المرور",
+        description: "حدث خطأ في الاتصال",
         variant: "destructive",
       });
     } finally {
