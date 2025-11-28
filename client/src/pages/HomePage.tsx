@@ -14,10 +14,20 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { Search, ShoppingCart, ListOrdered, Loader2, LogIn, UserPlus, X, Star, Flame } from 'lucide-react';
+import { Search, ShoppingCart, ListOrdered, Loader2, LogIn, UserPlus, X, Star, Flame, Clock, MessageCircle, Package } from 'lucide-react';
 import { fetchServices, fetchBalance, createOrder, type Service } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import { useLocation } from 'wouter';
+
+interface Subscription {
+  id: number;
+  name: string;
+  description: string;
+  imageUrl: string | null;
+  deliveryTime: string;
+  price: number;
+  isActive: number;
+}
 
 interface HomePageProps {
   onNavigate: (page: string) => void;
@@ -56,6 +66,17 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     queryFn: fetchBalance,
     enabled: !!user,
   });
+
+  const { data: subscriptionsData, isLoading: subscriptionsLoading } = useQuery<{ subscriptions: Subscription[] }>({
+    queryKey: ['/api/subscriptions'],
+  });
+
+  const subscriptions = subscriptionsData?.subscriptions || [];
+
+  const handleContactSubscription = (subscription: Subscription) => {
+    const message = `مرحباً، أريد الاستفسار عن الاشتراك: ${subscription.name}`;
+    window.open(`https://wa.me/9647766699669?text=${encodeURIComponent(message)}`, '_blank');
+  };
 
   const createOrderMutation = useMutation({
     mutationFn: createOrder,
@@ -333,9 +354,63 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           </TabsContent>
 
           <TabsContent value="subscriptions" className="m-0">
-            <div className="text-center py-8 text-muted-foreground">
-              {language === 'ar' ? 'قريباً - خدمة الاشتراكات' : 'Coming soon - Subscriptions'}
-            </div>
+            {subscriptionsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : subscriptions.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>{language === 'ar' ? 'لا توجد اشتراكات متاحة حالياً' : 'No subscriptions available'}</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {subscriptions.map((subscription) => (
+                  <Card key={subscription.id} className="overflow-hidden" data-testid={`subscription-card-${subscription.id}`}>
+                    <div className="flex gap-4">
+                      {subscription.imageUrl && (
+                        <div className="w-32 h-32 shrink-0 bg-muted overflow-hidden">
+                          <img
+                            src={subscription.imageUrl}
+                            alt={subscription.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1 p-4 space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="font-bold text-lg">{subscription.name}</h3>
+                          <Badge variant="secondary" className="bg-primary/10 text-primary border-0 shrink-0 text-lg px-3">
+                            ${subscription.price.toFixed(2)}
+                          </Badge>
+                        </div>
+                        
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {subscription.description}
+                        </p>
+                        
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Clock className="w-4 h-4" />
+                          <span>{language === 'ar' ? 'مدة التسليم:' : 'Delivery:'} {subscription.deliveryTime}</span>
+                        </div>
+                        
+                        <Button
+                          className="w-full gap-2 bg-green-600 hover:bg-green-700"
+                          onClick={() => handleContactSubscription(subscription)}
+                          data-testid={`button-contact-subscription-${subscription.id}`}
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                          {language === 'ar' ? 'تواصل عبر واتساب' : 'Contact via WhatsApp'}
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </Card>
