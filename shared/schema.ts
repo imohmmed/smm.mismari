@@ -68,6 +68,29 @@ export const settings = pgTable("settings", {
 
 export type Setting = typeof settings.$inferSelect;
 
+// Subscriptions table for custom products/packages
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  imageUrl: text("image_url"),
+  deliveryTime: text("delivery_time").notNull(),
+  price: real("price").notNull(),
+  isActive: integer("is_active").default(1).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertSubscriptionSchema = createInsertSchema(subscriptions).pick({
+  name: true,
+  description: true,
+  imageUrl: true,
+  deliveryTime: true,
+  price: true,
+});
+
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type Subscription = typeof subscriptions.$inferSelect;
+
 export const serviceSchema = z.object({
   service: z.number(),
   name: z.string(),
