@@ -4,12 +4,9 @@ import {
   type Order,
   type InsertOrder,
   type ServiceWithMarkup,
-  type CuratedService,
-  type InsertCuratedService,
   type Setting,
   users,
   orders,
-  curatedServices,
   settings
 } from "@shared/schema";
 import { db } from "./db";
@@ -40,11 +37,6 @@ export interface IStorage {
   updateOrderStatus(orderId: number, status: string, apiOrderId?: number, remains?: number): Promise<Order | undefined>;
   countOrders(): Promise<number>;
   getCompletedOrdersCount(userId: string): Promise<number>;
-  
-  getCuratedServices(): Promise<CuratedService[]>;
-  addCuratedService(service: InsertCuratedService): Promise<CuratedService>;
-  removeCuratedService(id: number): Promise<boolean>;
-  getCuratedServiceByServiceId(serviceId: number): Promise<CuratedService | undefined>;
   
   cacheServices(services: ServiceWithMarkup[]): void;
   getCachedServices(): ServiceWithMarkup[];
@@ -208,25 +200,6 @@ export class DatabaseStorage implements IStorage {
       .where(eq(orders.id, orderId))
       .returning();
     return updated;
-  }
-
-  async getCuratedServices(): Promise<CuratedService[]> {
-    return db.select().from(curatedServices).where(eq(curatedServices.active, true));
-  }
-
-  async addCuratedService(service: InsertCuratedService): Promise<CuratedService> {
-    const [newService] = await db.insert(curatedServices).values(service).returning();
-    return newService;
-  }
-
-  async removeCuratedService(id: number): Promise<boolean> {
-    const result = await db.delete(curatedServices).where(eq(curatedServices.id, id));
-    return true;
-  }
-
-  async getCuratedServiceByServiceId(serviceId: number): Promise<CuratedService | undefined> {
-    const [service] = await db.select().from(curatedServices).where(eq(curatedServices.serviceId, serviceId));
-    return service;
   }
 
   cacheServices(services: ServiceWithMarkup[]): void {

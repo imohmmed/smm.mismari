@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Users, 
-  Package, 
   ShoppingCart, 
   LogOut,
   Sun,
@@ -25,7 +24,6 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import AdminUsers from "./AdminUsers";
-import AdminServices from "./AdminServices";
 import AdminOrders from "./AdminOrders";
 
 interface AdminStats {
@@ -263,14 +261,10 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="users" className="gap-2" data-testid="tab-users">
               <Users className="w-4 h-4" />
               {t("users")}
-            </TabsTrigger>
-            <TabsTrigger value="services" className="gap-2" data-testid="tab-services">
-              <Package className="w-4 h-4" />
-              {t("services")}
             </TabsTrigger>
             <TabsTrigger value="orders" className="gap-2" data-testid="tab-orders">
               <ShoppingCart className="w-4 h-4" />
@@ -280,10 +274,6 @@ export default function AdminDashboard() {
 
           <TabsContent value="users">
             <AdminUsers />
-          </TabsContent>
-
-          <TabsContent value="services">
-            <AdminServices />
           </TabsContent>
 
           <TabsContent value="orders">

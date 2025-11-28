@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, real, boolean, timestamp, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, real, timestamp, serial } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -52,32 +52,6 @@ export const insertOrderSchema = createInsertSchema(orders).pick({
 
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Order = typeof orders.$inferSelect;
-
-export const curatedServices = pgTable("curated_services", {
-  id: serial("id").primaryKey(),
-  serviceId: integer("service_id").notNull().unique(),
-  platform: text("platform").notNull(),
-  category: text("category").notNull(),
-  serviceName: text("service_name").notNull(),
-  rate: text("rate").notNull(),
-  min: integer("min").notNull(),
-  max: integer("max").notNull(),
-  active: boolean("active").default(true).notNull(),
-  addedAt: timestamp("added_at").defaultNow().notNull(),
-});
-
-export const insertCuratedServiceSchema = createInsertSchema(curatedServices).pick({
-  serviceId: true,
-  platform: true,
-  category: true,
-  serviceName: true,
-  rate: true,
-  min: true,
-  max: true,
-});
-
-export type InsertCuratedService = z.infer<typeof insertCuratedServiceSchema>;
-export type CuratedService = typeof curatedServices.$inferSelect;
 
 export const sessions = pgTable("sessions", {
   sid: varchar("sid").primaryKey(),
