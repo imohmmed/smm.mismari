@@ -1,4 +1,3 @@
-import { useLanguage } from '@/contexts/LanguageContext';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,7 @@ import {
   SiX, 
   SiTelegram 
 } from 'react-icons/si';
-import { Clock, CheckCircle2, XCircle, Loader2, RotateCcw, MessageCircle, Calendar, Link2, AlertCircle, Package, Timer, DollarSign, Hash } from 'lucide-react';
+import { Clock, CheckCircle2, XCircle, Loader2, RotateCcw, MessageCircle, Calendar, DollarSign, Package, Timer, AlertCircle } from 'lucide-react';
 
 type OrderStatus = 'pending' | 'inProgress' | 'completed' | 'cancelled' | 'partial' | 'processing' | 'refunded';
 
@@ -65,12 +64,10 @@ export default function OrderCard({
   onRepeat,
   serviceId
 }: OrderCardProps) {
-  const { t } = useLanguage();
   const PlatformIcon = platformIcons[platform.toLowerCase()] || SiInstagram;
   const statusInfo = statusConfig[status] || statusConfig.pending;
   const StatusIcon = statusInfo.icon;
   
-  const safeStartCount = startCount ?? 0;
   const safeRemains = remains ?? 0;
   
   const progress = safeRemains > 0 ? ((quantity - safeRemains) / quantity) * 100 : (status === 'completed' ? 100 : 0);
@@ -96,33 +93,49 @@ export default function OrderCard({
 
   return (
     <Card className="p-4 hover-elevate overflow-visible">
-      {/* Header with Order ID and Date */}
+      {/* Header with Date and Order ID */}
       <div className="flex items-center justify-between mb-3">
-        <Badge className="bg-primary text-primary-foreground text-sm px-3 py-1">
-          {id}
-        </Badge>
-        <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <Calendar className="w-3 h-3" />
           <span>{date}</span>
         </div>
+        <Badge className="bg-primary text-primary-foreground text-sm px-3 py-1">
+          {id}
+        </Badge>
       </div>
 
-      {/* Service Name */}
+      {/* Service Name with Platform Icon */}
       <div className="flex items-start gap-3 mb-3">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex items-center justify-center flex-shrink-0">
+        <p className="font-medium text-foreground text-sm leading-relaxed flex-1">{serviceName}</p>
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex items-center justify-center flex-shrink-0">
           <PlatformIcon className="w-4 h-4 text-white" />
         </div>
-        <p className="font-medium text-foreground text-sm leading-relaxed flex-1">{serviceName}</p>
       </div>
 
-      {/* Status Badge */}
-      <div className="flex items-center gap-2 mb-3">
-        <Button size="sm" variant="ghost" className="p-2 h-8 w-8">
-          <RotateCcw className="w-4 h-4 text-primary" />
-        </Button>
-        <Button size="sm" variant="ghost" className="p-2 h-8 w-8">
-          <MessageCircle className="w-4 h-4 text-primary" />
-        </Button>
+      {/* Status Badge and Action Buttons Row */}
+      <div className="flex items-center justify-between mb-3">
+        {/* Action Buttons - Left Side */}
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={handleRepeat}
+            disabled={!serviceId}
+            className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+            data-testid={`button-repeat-order-${id}`}
+          >
+            <RotateCcw className="w-5 h-5" />
+            <span className="text-[10px]">تكرار</span>
+          </button>
+          <button 
+            onClick={handleSupport}
+            className="flex flex-col items-center gap-1 text-muted-foreground hover:text-primary transition-colors"
+            data-testid={`button-support-order-${id}`}
+          >
+            <MessageCircle className="w-5 h-5" />
+            <span className="text-[10px]">الدعم</span>
+          </button>
+        </div>
+
+        {/* Status Badge - Right Side */}
         <Badge variant="secondary" className={`${statusInfo.bgColor} ${statusInfo.color} border-0 px-3 py-1`}>
           <StatusIcon className={`w-3 h-3 ml-1 ${(status === 'inProgress' || status === 'processing') ? 'animate-spin' : ''}`} />
           {statusInfo.label}
@@ -144,7 +157,7 @@ export default function OrderCard({
         </div>
       )}
 
-      {/* Stats Grid - Similar to amazingsmm.com */}
+      {/* Stats Grid - 2x2 */}
       <div className="grid grid-cols-2 gap-2 mb-3">
         {/* Time / Date */}
         <div className="bg-muted/30 rounded-lg p-3 border border-border/30">
@@ -173,59 +186,25 @@ export default function OrderCard({
           <p className="text-sm font-medium mt-1">{quantity.toLocaleString()}</p>
         </div>
 
-        {/* Start Count */}
+        {/* Remaining - Replaced Start Count */}
         <div className="bg-muted/30 rounded-lg p-3 border border-border/30">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">عداد البدء:</span>
-            <Hash className="w-4 h-4 text-primary" />
+            <span className="text-xs text-muted-foreground">المتبقي:</span>
+            <Clock className="w-4 h-4 text-primary" />
           </div>
-          <p className="text-sm font-medium mt-1">{safeStartCount.toLocaleString()}</p>
+          <p className="text-sm font-medium mt-1">{safeRemains.toLocaleString()}</p>
         </div>
-      </div>
-
-      {/* Remaining - Full Width */}
-      <div className="bg-muted/30 rounded-lg p-3 border border-border/30 mb-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">المتبقي:</span>
-          <Clock className="w-4 h-4 text-primary" />
-        </div>
-        <p className="text-sm font-medium mt-1">{safeRemains.toLocaleString()}</p>
       </div>
 
       {/* Progress Bar */}
       {(status === 'inProgress' || status === 'processing') && quantity > 0 && (
-        <div className="mb-3">
+        <div className="mb-2">
           <Progress value={progress} className="h-2" />
           <p className="text-xs text-muted-foreground text-center mt-1">
             {Math.round(progress)}% مكتمل
           </p>
         </div>
       )}
-
-      {/* Action Buttons */}
-      <div className="flex items-center justify-center gap-2 pt-2 border-t border-border">
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-1 text-xs flex-1"
-          onClick={handleRepeat}
-          disabled={!serviceId}
-          data-testid={`button-repeat-order-${id}`}
-        >
-          <RotateCcw className="w-3 h-3" />
-          تكرار
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-1 text-xs flex-1"
-          onClick={handleSupport}
-          data-testid={`button-support-order-${id}`}
-        >
-          <MessageCircle className="w-3 h-3" />
-          الدعم
-        </Button>
-      </div>
     </Card>
   );
 }
