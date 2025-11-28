@@ -5,9 +5,12 @@ import {
   type InsertOrder,
   type ServiceWithMarkup,
   type Setting,
+  type Subscription,
+  type InsertSubscription,
   users,
   orders,
-  settings
+  settings,
+  subscriptions
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, like, or, desc, count, sum } from "drizzle-orm";
@@ -50,6 +53,15 @@ export interface IStorage {
   updateUserRole(id: string, role: string): Promise<User | undefined>;
   deleteUser(id: string): Promise<boolean>;
   updateUserDiscount(id: string, discount: number): Promise<User | undefined>;
+  
+  // Subscriptions
+  getAllSubscriptions(): Promise<Subscription[]>;
+  getActiveSubscriptions(): Promise<Subscription[]>;
+  getSubscription(id: number): Promise<Subscription | undefined>;
+  createSubscription(subscription: InsertSubscription): Promise<Subscription>;
+  updateSubscription(id: number, data: Partial<InsertSubscription>): Promise<Subscription | undefined>;
+  deleteSubscription(id: number): Promise<boolean>;
+  toggleSubscriptionStatus(id: number): Promise<Subscription | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -254,6 +266,52 @@ export class DatabaseStorage implements IStorage {
     await db.delete(orders).where(eq(orders.userId, id));
     const result = await db.delete(users).where(eq(users.id, id));
     return true;
+  }
+
+  // Subscription methods
+  async getAllSubscriptions(): Promise<Subscription[]> {
+    return db.select().from(subscriptions).orderBy(desc(subscriptions.createdAt));
+  }
+
+  async getActiveSubscriptions(): Promise<Subscription[]> {
+    return db.select().from(subscriptions)
+      .where(eq(subscriptions.isActive, 1))
+      .orderBy(desc(subscriptions.createdAt));
+  }
+
+  async getSubscription(id: number): Promise<Subscription | undefined> {
+    const [subscription] = await db.select().from(subscriptions).where(eq(subscriptions.id, id));
+    return subscription;
+  }
+
+  async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
+    const [newSubscription] = await db.insert(subscriptions).values(subscription).returning();
+    return newSubscription;
+  }
+
+  async updateSubscription(id: number, data: Partial<InsertSubscription>): Promise<Subscription | undefined> {
+    const [updated] = await db.update(subscriptions)
+      .set(data)
+      .where(eq(subscriptions.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteSubscription(id: number): Promise<boolean> {
+    await db.delete(subscriptions).where(eq(subscriptions.id, id));
+    return true;
+  }
+
+  async toggleSubscriptionStatus(id: number): Promise<Subscription | undefined> {
+    const subscription = await this.getSubscription(id);
+    if (!subscription) return undefined;
+    
+    const newStatus = subscription.isActive === 1 ? 0 : 1;
+    const [updated] = await db.update(subscriptions)
+      .set({ isActive: newStatus })
+      .where(eq(subscriptions.id, id))
+      .returning();
+    return updated;
   }
 }
 

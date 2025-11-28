@@ -943,5 +943,120 @@ export async function registerRoutes(
     }
   });
 
+  // ========== Subscriptions Routes ==========
+  
+  // Get all subscriptions (admin)
+  app.get("/api/admin/subscriptions", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const allSubscriptions = await storage.getAllSubscriptions();
+      res.json({ subscriptions: allSubscriptions });
+    } catch (error) {
+      console.error("Error fetching subscriptions:", error);
+      res.status(500).json({ error: "Failed to fetch subscriptions" });
+    }
+  });
+
+  // Get active subscriptions (public)
+  app.get("/api/subscriptions", async (req: Request, res: Response) => {
+    try {
+      const activeSubscriptions = await storage.getActiveSubscriptions();
+      res.json({ subscriptions: activeSubscriptions });
+    } catch (error) {
+      console.error("Error fetching subscriptions:", error);
+      res.status(500).json({ error: "Failed to fetch subscriptions" });
+    }
+  });
+
+  // Get single subscription
+  app.get("/api/subscriptions/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const subscription = await storage.getSubscription(id);
+      if (!subscription) {
+        return res.status(404).json({ error: "Subscription not found" });
+      }
+      res.json({ subscription });
+    } catch (error) {
+      console.error("Error fetching subscription:", error);
+      res.status(500).json({ error: "Failed to fetch subscription" });
+    }
+  });
+
+  // Create subscription (admin)
+  app.post("/api/admin/subscriptions", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { name, description, imageUrl, deliveryTime, price } = req.body;
+      
+      if (!name || !description || !deliveryTime || price === undefined) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      const subscription = await storage.createSubscription({
+        name,
+        description,
+        imageUrl: imageUrl || null,
+        deliveryTime,
+        price: parseFloat(price),
+      });
+
+      res.json({ success: true, subscription });
+    } catch (error) {
+      console.error("Error creating subscription:", error);
+      res.status(500).json({ error: "Failed to create subscription" });
+    }
+  });
+
+  // Update subscription (admin)
+  app.patch("/api/admin/subscriptions/:id", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { name, description, imageUrl, deliveryTime, price } = req.body;
+
+      const updateData: any = {};
+      if (name !== undefined) updateData.name = name;
+      if (description !== undefined) updateData.description = description;
+      if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
+      if (deliveryTime !== undefined) updateData.deliveryTime = deliveryTime;
+      if (price !== undefined) updateData.price = parseFloat(price);
+
+      const subscription = await storage.updateSubscription(id, updateData);
+      if (!subscription) {
+        return res.status(404).json({ error: "Subscription not found" });
+      }
+
+      res.json({ success: true, subscription });
+    } catch (error) {
+      console.error("Error updating subscription:", error);
+      res.status(500).json({ error: "Failed to update subscription" });
+    }
+  });
+
+  // Toggle subscription status (admin)
+  app.patch("/api/admin/subscriptions/:id/toggle", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const subscription = await storage.toggleSubscriptionStatus(id);
+      if (!subscription) {
+        return res.status(404).json({ error: "Subscription not found" });
+      }
+      res.json({ success: true, subscription });
+    } catch (error) {
+      console.error("Error toggling subscription:", error);
+      res.status(500).json({ error: "Failed to toggle subscription" });
+    }
+  });
+
+  // Delete subscription (admin)
+  app.delete("/api/admin/subscriptions/:id", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteSubscription(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting subscription:", error);
+      res.status(500).json({ error: "Failed to delete subscription" });
+    }
+  });
+
   return httpServer;
 }
