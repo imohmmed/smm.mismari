@@ -20,12 +20,28 @@ export default function OrdersPage({ onNavigate, onRepeatOrder }: OrdersPageProp
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const { data: ordersData, isLoading } = useQuery({
+  const { data: ordersData, isLoading, error } = useQuery({
     queryKey: ['/api/orders'],
     queryFn: fetchOrders,
+    enabled: !!user,
+    retry: false,
   });
 
   const orders = ordersData?.orders || [];
+
+  // Show empty state if user is not logged in or there's an error
+  if (!user || error) {
+    return (
+      <div className="space-y-4 pb-4" dir="rtl">
+        <Card>
+          <EmptyState
+            type="orders"
+            onAction={() => onNavigate('newOrder')}
+          />
+        </Card>
+      </div>
+    );
+  }
 
   const filteredOrders = orders.filter(order => {
     const orderId = order.apiOrderId || order.id;
