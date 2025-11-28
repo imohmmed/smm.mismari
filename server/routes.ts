@@ -66,6 +66,13 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
+  const isProduction = process.env.NODE_ENV === "production";
+  
+  // Trust proxy for Replit's reverse proxy in production
+  if (isProduction) {
+    app.set("trust proxy", 1);
+  }
+  
   const PgSession = connectPgSimple(session);
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
@@ -79,11 +86,12 @@ export async function registerRoutes(
       secret: process.env.SESSION_SECRET || "smm-panel-secret-key-2024",
       resave: false,
       saveUninitialized: false,
+      proxy: isProduction,
       cookie: {
-        secure: process.env.NODE_ENV === "production",
+        secure: isProduction,
         httpOnly: true,
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        sameSite: "lax",
+        sameSite: isProduction ? "none" : "lax",
       },
     })
   );
