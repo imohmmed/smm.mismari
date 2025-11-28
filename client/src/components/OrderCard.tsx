@@ -55,8 +55,8 @@ export default function OrderCard({
   platform,
   link,
   quantity,
-  startCount = 0,
-  remains = 0,
+  startCount,
+  remains,
   status,
   price,
   date,
@@ -68,7 +68,11 @@ export default function OrderCard({
   const statusInfo = statusConfig[status];
   const StatusIcon = statusInfo.icon;
   
-  const progress = remains > 0 ? ((quantity - remains) / quantity) * 100 : (status === 'completed' ? 100 : 0);
+  // Handle null/undefined values with defaults
+  const safeStartCount = startCount ?? 0;
+  const safeRemains = remains ?? 0;
+  
+  const progress = safeRemains > 0 ? ((quantity - safeRemains) / quantity) * 100 : (status === 'completed' ? 100 : 0);
 
   const handleSupport = () => {
     const message = `السلام عليكم
@@ -105,16 +109,18 @@ export default function OrderCard({
           <span className="text-muted-foreground">{t('quantity')}</span>
           <span className="font-medium">{quantity.toLocaleString()}</span>
         </div>
-        {startCount > 0 && (
+        {safeStartCount > 0 && (
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">عداد البدء</span>
-            <span className="font-medium">{startCount.toLocaleString()}</span>
+            <span className="font-medium">{safeStartCount.toLocaleString()}</span>
           </div>
         )}
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">المتبقي</span>
-          <span className="font-medium">{remains.toLocaleString()}</span>
-        </div>
+        {safeRemains > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">المتبقي</span>
+            <span className="font-medium">{safeRemains.toLocaleString()}</span>
+          </div>
+        )}
       </div>
 
       {status === 'inProgress' && (
