@@ -14,7 +14,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { Search, ShoppingCart, ListOrdered, Loader2, LogIn, UserPlus, X, Star, Flame, Clock, MessageCircle, Package } from 'lucide-react';
+import { Search, ShoppingCart, ListOrdered, Loader2, LogIn, UserPlus, X, Star, Flame, Clock, MessageCircle, Package, ChevronLeft } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { fetchServices, fetchBalance, createOrder, type Service } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import { useLocation } from 'wouter';
@@ -44,6 +50,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [selectedServiceId, setSelectedServiceId] = useState<number | null>(null);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [selectedSearchService, setSelectedSearchService] = useState<Service | null>(null);
+  const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -364,54 +371,106 @@ export default function HomePage({ onNavigate }: HomePageProps) {
                 <p>{language === 'ar' ? 'لا توجد اشتراكات متاحة حالياً' : 'No subscriptions available'}</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {subscriptions.map((subscription) => (
-                  <Card key={subscription.id} className="overflow-hidden" data-testid={`subscription-card-${subscription.id}`}>
-                    <div className="flex gap-4">
-                      {subscription.imageUrl && (
-                        <div className="w-32 h-32 shrink-0 bg-muted overflow-hidden">
-                          <img
-                            src={subscription.imageUrl}
-                            alt={subscription.name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                          />
+                  <button
+                    key={subscription.id}
+                    onClick={() => setSelectedSubscription(subscription)}
+                    className="w-full text-right"
+                    data-testid={`subscription-card-${subscription.id}`}
+                  >
+                    <Card className="overflow-hidden hover:bg-muted/30 transition-colors">
+                      <div className="flex items-center gap-3 p-3">
+                        {subscription.imageUrl && (
+                          <div className="w-16 h-16 shrink-0 bg-muted rounded-lg overflow-hidden">
+                            <img
+                              src={subscription.imageUrl}
+                              alt={subscription.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <h3 className="font-bold truncate">{subscription.name}</h3>
+                            <Badge variant="secondary" className="bg-primary/10 text-primary border-0 shrink-0">
+                              ${subscription.price.toFixed(2)}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground line-clamp-1">
+                            {subscription.description}
+                          </p>
                         </div>
-                      )}
-                      <div className="flex-1 p-4 space-y-2">
-                        <div className="flex items-start justify-between gap-2">
-                          <h3 className="font-bold text-lg">{subscription.name}</h3>
-                          <Badge variant="secondary" className="bg-primary/10 text-primary border-0 shrink-0 text-lg px-3">
-                            ${subscription.price.toFixed(2)}
-                          </Badge>
-                        </div>
-                        
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {subscription.description}
-                        </p>
-                        
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Clock className="w-4 h-4" />
-                          <span>{language === 'ar' ? 'مدة التسليم:' : 'Delivery:'} {subscription.deliveryTime}</span>
-                        </div>
-                        
-                        <Button
-                          className="w-full gap-2 bg-green-600 hover:bg-green-700"
-                          onClick={() => handleContactSubscription(subscription)}
-                          data-testid={`button-contact-subscription-${subscription.id}`}
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                          {language === 'ar' ? 'تواصل عبر واتساب' : 'Contact via WhatsApp'}
-                        </Button>
+                        <ChevronLeft className="w-5 h-5 text-muted-foreground shrink-0" />
                       </div>
-                    </div>
-                  </Card>
+                    </Card>
+                  </button>
                 ))}
               </div>
             )}
           </TabsContent>
+
+          <Dialog open={!!selectedSubscription} onOpenChange={(open) => !open && setSelectedSubscription(null)}>
+            <DialogContent className="max-w-md" dir="rtl">
+              {selectedSubscription && (
+                <>
+                  <DialogHeader>
+                    <DialogTitle className="text-xl">{selectedSubscription.name}</DialogTitle>
+                  </DialogHeader>
+                  
+                  <div className="space-y-4">
+                    {selectedSubscription.imageUrl && (
+                      <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                        <img
+                          src={selectedSubscription.imageUrl}
+                          alt={selectedSubscription.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">{language === 'ar' ? 'السعر' : 'Price'}</span>
+                      <Badge className="bg-primary text-primary-foreground text-lg px-4 py-1">
+                        ${selectedSubscription.price.toFixed(2)}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">{language === 'ar' ? 'مدة التسليم' : 'Delivery Time'}</span>
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-4 h-4 text-muted-foreground" />
+                        <span>{selectedSubscription.deliveryTime}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <span className="text-muted-foreground">{language === 'ar' ? 'الوصف' : 'Description'}</span>
+                      <p className="text-sm leading-relaxed bg-muted/30 p-3 rounded-lg">
+                        {selectedSubscription.description}
+                      </p>
+                    </div>
+                    
+                    <Button
+                      className="w-full gap-2 bg-green-600 hover:bg-green-700"
+                      size="lg"
+                      onClick={() => handleContactSubscription(selectedSubscription)}
+                      data-testid={`button-contact-subscription-${selectedSubscription.id}`}
+                    >
+                      <MessageCircle className="w-5 h-5" />
+                      {language === 'ar' ? 'تواصل عبر واتساب' : 'Contact via WhatsApp'}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </DialogContent>
+          </Dialog>
         </Tabs>
       </Card>
 
