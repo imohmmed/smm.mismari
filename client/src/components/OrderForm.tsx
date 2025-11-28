@@ -98,6 +98,17 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
   const [quantity, setQuantity] = useState('');
   const [total, setTotal] = useState(0);
 
+  // Auto-select service when there's only one service (from search results)
+  useEffect(() => {
+    if (services.length === 1 && selectedService !== services[0].id.toString()) {
+      setSelectedService(services[0].id.toString());
+      // Also set the category for the selected service
+      if (services[0].category) {
+        setSelectedCategory(services[0].category);
+      }
+    }
+  }, [services]);
+
   const filteredServices = selectedCategory 
     ? services.filter(s => s.category === selectedCategory)
     : services;
