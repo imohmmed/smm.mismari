@@ -36,19 +36,28 @@ const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
 };
 
 async function seedAdminUser() {
+  const ADMIN_EMAIL = "it.mohmmed@yahoo.com";
+  const ADMIN_PASSWORD = "ZVwas1515";
+  const ADMIN_USERNAME = "Mohmmed";
+  const ADMIN_PHONE = "+9647766699669";
+
   try {
-    const existingAdmin = await storage.getUserByEmail("it.mohmmed@yahoo.com");
+    const existingAdmin = await storage.getUserByEmail(ADMIN_EMAIL);
     if (!existingAdmin) {
       await storage.createUser({
-        username: "admin",
-        email: "it.mohmmed@yahoo.com",
-        password: "ZVwas511",
+        username: ADMIN_USERNAME,
+        email: ADMIN_EMAIL,
+        password: ADMIN_PASSWORD,
+        phone: ADMIN_PHONE,
         role: "admin",
       });
-      console.log("Admin user created: it.mohmmed@yahoo.com");
+      console.log("[seed] Default admin account created: " + ADMIN_EMAIL);
+    } else if (existingAdmin.role !== "admin") {
+      await storage.updateUserRole(existingAdmin.id, "admin");
+      console.log("[seed] Updated existing user to admin role");
     }
   } catch (error) {
-    console.error("Error seeding admin user:", error);
+    console.error("[seed] Error seeding admin user:", error);
   }
 }
 
