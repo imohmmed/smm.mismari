@@ -730,7 +730,13 @@ export async function registerRoutes(
       }
 
       // Calculate charge with user discount applied
-      const baseCharge = (quantity / 1000) * service.rateWithMarkup;
+      // For single-quantity services (like Discord boosts where max=1), rate is the full price
+      // For regular services, rate is per 1000 units
+      const maxQtyNum = parseInt(String(service.max));
+      const isSingleQuantityService = maxQtyNum === 1;
+      const baseCharge = isSingleQuantityService 
+        ? quantity * service.rateWithMarkup 
+        : (quantity / 1000) * service.rateWithMarkup;
       const userDiscount = user.discount || 0;
       const discountAmount = (baseCharge * userDiscount) / 100;
       const charge = baseCharge - discountAmount;
@@ -842,7 +848,13 @@ export async function registerRoutes(
         }
       }
 
-      const charge = (quantity / 1000) * rate;
+      // For single-quantity services (like Discord boosts where max=1), rate is the full price
+      // For regular services, rate is per 1000 units
+      const maxQty = parseInt(String(service.max));
+      const isSingleQuantityService = maxQty === 1;
+      const charge = isSingleQuantityService 
+        ? quantity * rate 
+        : (quantity / 1000) * rate;
       
       res.json({
         serviceId,

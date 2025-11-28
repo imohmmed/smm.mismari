@@ -12,7 +12,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Clock, DollarSign, ShoppingCart } from 'lucide-react';
+import { Clock, DollarSign, ShoppingCart, AlertCircle, Link2, CheckCircle, Lock, AlertTriangle } from 'lucide-react';
 
 interface Service {
   id: number;
@@ -120,11 +120,18 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
       // currentService.price is already rateWithMarkup from the backend
       // Apply user discount if available
       const priceAfterDiscount = currentService.price * (1 - userDiscount / 100);
-      setTotal((qty / 1000) * priceAfterDiscount);
+      
+      // For single-quantity services (like Discord boosts), the rate IS the full price
+      // For regular services, rate is per 1000 units
+      if (isSingleQuantityService) {
+        setTotal(qty * priceAfterDiscount);
+      } else {
+        setTotal((qty / 1000) * priceAfterDiscount);
+      }
     } else {
       setTotal(0);
     }
-  }, [currentService, quantity, userDiscount]);
+  }, [currentService, quantity, userDiscount, isSingleQuantityService]);
 
   const handleSubmit = () => {
     if (!currentService || !link || !quantity) return;
@@ -195,6 +202,46 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
             </SelectContent>
           </Select>
         </div>
+
+        {/* Service Description for Discord services */}
+        {currentService && currentService.platform === 'discord' && (
+          <Card className="p-4 bg-muted/30 border-muted" dir="rtl">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertCircle className="w-5 h-5 text-primary" />
+              <h3 className="font-semibold">وصف الخدمة</h3>
+            </div>
+            <div className="space-y-3 text-sm">
+              <div className="flex items-start gap-2">
+                <Link2 className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                <p>يجب عليك الدخول إلى اتصال الخادم.</p>
+              </div>
+              <div className="flex items-start gap-2 text-muted-foreground">
+                <span className="text-xs">💬</span>
+                <p>رابط المثال: https://discord.gg/xxxxxx</p>
+              </div>
+              <div className="flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                <p>تتم إضافة الأعضاء إلى الخادم الخاص بك ويتم إجراء التعزيز.</p>
+              </div>
+              <div className="flex items-start gap-2 text-orange-500">
+                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                <p>إذا تم طرد الأعضاء الذين ضغطوا على Boost من الخادم، فسيتم إلغاء التعزيز.</p>
+              </div>
+              <div className="flex items-start gap-2">
+                <Lock className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                <p>يجب ألا يحتوي الخادم على "Member Bot Verification" أو "Spam Blocker Bot".</p>
+              </div>
+              <div className="flex items-start gap-2">
+                <Lock className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                <p>يجب إيقاف مستوى التحقق.</p>
+              </div>
+              <div className="flex items-start gap-2 text-red-500">
+                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                <p>لا توجد إمكانية لاسترداد الأموال/إعادة التعبئة عند حذف الدعوات أو حدود الدعوات.</p>
+              </div>
+            </div>
+          </Card>
+        )}
 
         <div>
           <Label className="text-sm text-muted-foreground mb-2 block">{t('link')}</Label>
