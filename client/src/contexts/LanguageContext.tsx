@@ -29,7 +29,7 @@ const translations: Record<string, string> = {
   'serviceName': 'اسم الخدمة',
   'link': 'الرابط',
   'quantity': 'الكمية',
-  'executionTime': 'مؤقت التنفيذ',
+  'executionTime': 'وقت البدء',
   'totalAmount': 'المبلغ الإجمالي',
   'confirmOrder': 'تأكيد الطلب',
   'searchService': 'ابحث باسم او رقم الخدمة',
