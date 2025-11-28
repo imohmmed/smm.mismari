@@ -45,15 +45,19 @@ const getPlatformPlaceholder = (platform?: string): string => {
 };
 
 const extractExecutionTime = (serviceName: string, language: string): string => {
+  // Look for time patterns like "0-1 ساعة", "1-2 hours", "فوري", etc.
   const arabicPatterns = [
-    /وقت البدأ[:\s]*([^~\-]+)/i,
-    /وقت البدء[:\s]*([^~\-]+)/i,
-    /البدأ[:\s]*([^~\-]+)/i,
+    /وقت البدأ[:\s]*(\d+[-–]\d+\s*(?:ساعة|ساعات|دقيقة|دقائق|يوم|أيام)?)/i,
+    /وقت البدء[:\s]*(\d+[-–]\d+\s*(?:ساعة|ساعات|دقيقة|دقائق|يوم|أيام)?)/i,
+    /البدء[:\s]*(\d+[-–]\d+\s*(?:ساعة|ساعات|دقيقة|دقائق|يوم|أيام)?)/i,
+    /وقت البدأ[:\s]*(فوري)/i,
+    /وقت البدء[:\s]*(فوري)/i,
   ];
   
   const englishPatterns = [
-    /start time[:\s]*([^~\-]+)/i,
-    /time[:\s]*([^~\-]+)/i,
+    /start time[:\s]*(\d+[-–]\d+\s*(?:hour|hours|minute|minutes|day|days)?)/i,
+    /time[:\s]*(\d+[-–]\d+\s*(?:hour|hours|minute|minutes|day|days)?)/i,
+    /start time[:\s]*(instant)/i,
   ];
   
   const patterns = language === 'ar' ? [...arabicPatterns, ...englishPatterns] : [...englishPatterns, ...arabicPatterns];
@@ -61,7 +65,12 @@ const extractExecutionTime = (serviceName: string, language: string): string => 
   for (const pattern of patterns) {
     const match = serviceName.match(pattern);
     if (match && match[1]) {
-      return match[1].trim();
+      const result = match[1].trim();
+      // Add unit if missing
+      if (/^\d+[-–]\d+$/.test(result)) {
+        return result + (language === 'ar' ? ' ساعة' : ' hours');
+      }
+      return result;
     }
   }
   
