@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 type PaymentMethod = 'rafidain' | 'zainCash' | 'asiaCash' | 'other';
 
 const WHATSAPP_NUMBER = '9647766699669';
-const EXCHANGE_RATE = 1400;
+const EXCHANGE_RATE = 1450;
 
 interface PaymentMethodsProps {
   onSubmit?: (method: PaymentMethod, amount: number) => void;
