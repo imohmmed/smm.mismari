@@ -11,7 +11,7 @@ import {
   SiX, 
   SiTelegram 
 } from 'react-icons/si';
-import { Clock, CheckCircle2, XCircle, Loader2, RotateCcw, MessageCircle, Calendar, Link2, AlertCircle, Package, Timer, DollarSign, Hash } from 'lucide-react';
+import { Clock, CheckCircle2, XCircle, Loader2, RotateCcw, MessageCircle, Calendar, AlertCircle, Package, Timer, DollarSign } from 'lucide-react';
 
 type OrderStatus = 'pending' | 'inProgress' | 'completed' | 'cancelled' | 'partial' | 'processing' | 'refunded';
 
@@ -70,7 +70,6 @@ export default function OrderCard({
   const statusInfo = statusConfig[status] || statusConfig.pending;
   const StatusIcon = statusInfo.icon;
   
-  const safeStartCount = startCount ?? 0;
   const safeRemains = remains ?? 0;
   
   const progress = safeRemains > 0 ? ((quantity - safeRemains) / quantity) * 100 : (status === 'completed' ? 100 : 0);
@@ -116,13 +115,7 @@ export default function OrderCard({
       </div>
 
       {/* Status Badge */}
-      <div className="flex items-center gap-2 mb-3">
-        <Button size="sm" variant="ghost" className="p-2 h-8 w-8">
-          <RotateCcw className="w-4 h-4 text-primary" />
-        </Button>
-        <Button size="sm" variant="ghost" className="p-2 h-8 w-8">
-          <MessageCircle className="w-4 h-4 text-primary" />
-        </Button>
+      <div className="flex items-center mb-3">
         <Badge variant="secondary" className={`${statusInfo.bgColor} ${statusInfo.color} border-0 px-3 py-1`}>
           <StatusIcon className={`w-3 h-3 ml-1 ${(status === 'inProgress' || status === 'processing') ? 'animate-spin' : ''}`} />
           {statusInfo.label}
@@ -173,23 +166,14 @@ export default function OrderCard({
           <p className="text-sm font-medium mt-1">{quantity.toLocaleString()}</p>
         </div>
 
-        {/* Start Count */}
+        {/* Remaining */}
         <div className="bg-muted/30 rounded-lg p-3 border border-border/30">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">عداد البدء:</span>
-            <Hash className="w-4 h-4 text-primary" />
+            <span className="text-xs text-muted-foreground">المتبقي:</span>
+            <Clock className="w-4 h-4 text-primary" />
           </div>
-          <p className="text-sm font-medium mt-1">{safeStartCount.toLocaleString()}</p>
+          <p className="text-sm font-medium mt-1">{safeRemains.toLocaleString()}</p>
         </div>
-      </div>
-
-      {/* Remaining - Full Width */}
-      <div className="bg-muted/30 rounded-lg p-3 border border-border/30 mb-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">المتبقي:</span>
-          <Clock className="w-4 h-4 text-primary" />
-        </div>
-        <p className="text-sm font-medium mt-1">{safeRemains.toLocaleString()}</p>
       </div>
 
       {/* Progress Bar */}
