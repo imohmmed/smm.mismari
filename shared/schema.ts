@@ -100,6 +100,7 @@ export const serviceSchema = z.object({
   min: z.union([z.string(), z.number()]),
   max: z.union([z.string(), z.number()]),
   category: z.string(),
+  description: z.string().optional(),
   refill: z.boolean().optional(),
   cancel: z.boolean().optional(),
   dripfeed: z.boolean().optional(),

@@ -24,6 +24,7 @@ interface Service {
   category: string;
   platform?: string;
   type?: string;
+  description?: string;
 }
 
 const getPlatformPlaceholder = (platform?: string): string => {
@@ -252,8 +253,21 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
           </Select>
         </div>
 
+        {/* Service Description from API */}
+        {currentService?.description && (
+          <Card className="p-4 bg-muted/30 border-muted" dir="rtl">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertCircle className="w-5 h-5 text-primary" />
+              <h3 className="font-semibold">وصف الخدمة</h3>
+            </div>
+            <p className="text-sm text-muted-foreground whitespace-pre-line">
+              {currentService.description}
+            </p>
+          </Card>
+        )}
+
         {/* Service Description for Discord Boost services */}
-        {currentService && currentService.platform === 'discord' && 
+        {currentService && !currentService.description && currentService.platform === 'discord' && 
          currentService.name.toLowerCase().includes('boost') && (
           <Card className="p-4 bg-muted/30 border-muted" dir="rtl">
             <div className="flex items-center gap-2 mb-3">
@@ -294,7 +308,7 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
         )}
 
         {/* Service Description for Discord Members services */}
-        {currentService && currentService.platform === 'discord' && 
+        {currentService && !currentService.description && currentService.platform === 'discord' && 
          currentService.name.toLowerCase().includes('member') && (
           <Card className="p-4 bg-muted/30 border-muted" dir="rtl">
             <div className="flex items-center gap-2 mb-3">

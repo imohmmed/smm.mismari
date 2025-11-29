@@ -125,6 +125,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     category: s.category,
     platform: s.platform,
     type: s.type,
+    description: s.description,
   }));
 
   const handleOrderSubmit = (order: { serviceId: number; link: string; quantity: number; total: number; comments?: string }) => {

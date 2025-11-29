@@ -15,6 +15,7 @@ export interface Service {
   min: string;
   max: string;
   category: string;
+  description?: string;
   refill?: boolean;
   cancel?: boolean;
   dripfeed?: boolean;
