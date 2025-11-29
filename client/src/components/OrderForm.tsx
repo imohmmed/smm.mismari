@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,22 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Clock, DollarSign, ShoppingCart, AlertCircle, MessageSquare } from 'lucide-react';
+import { Clock, DollarSign, ShoppingCart, AlertCircle, MessageSquare, MoreHorizontal } from 'lucide-react';
+import { 
+  SiInstagram, 
+  SiFacebook, 
+  SiYoutube, 
+  SiTiktok, 
+  SiX, 
+  SiTelegram, 
+  SiSnapchat, 
+  SiDiscord, 
+  SiLinkedin, 
+  SiSpotify, 
+  SiTwitch,
+  SiGoogle,
+  SiThreads
+} from 'react-icons/si';
 
 interface Service {
   id: number;
@@ -26,6 +41,92 @@ interface Service {
   type?: string;
   description?: string;
 }
+
+const platformConfig: Record<string, { 
+  icon: typeof SiInstagram; 
+  label: string; 
+  color: string;
+  keywords: string[];
+}> = {
+  instagram: { 
+    icon: SiInstagram, 
+    label: 'انستجرام', 
+    color: 'bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400',
+    keywords: ['instagram', 'انستجرام', 'انستقرام', 'انستا']
+  },
+  facebook: { 
+    icon: SiFacebook, 
+    label: 'فيسبوك', 
+    color: 'bg-blue-600',
+    keywords: ['facebook', 'فيسبوك', 'فيس بوك']
+  },
+  youtube: { 
+    icon: SiYoutube, 
+    label: 'يوتيوب', 
+    color: 'bg-red-600',
+    keywords: ['youtube', 'يوتيوب']
+  },
+  tiktok: { 
+    icon: SiTiktok, 
+    label: 'تيك توك', 
+    color: 'bg-black',
+    keywords: ['tiktok', 'تيك توك', 'تيكتوك']
+  },
+  twitter: { 
+    icon: SiX, 
+    label: 'تويتر', 
+    color: 'bg-black',
+    keywords: ['twitter', 'تويتر', 'x.com', 'اكس']
+  },
+  telegram: { 
+    icon: SiTelegram, 
+    label: 'تليجرام', 
+    color: 'bg-sky-500',
+    keywords: ['telegram', 'تليجرام', 'تلجرام', 'تيليجرام']
+  },
+  snapchat: { 
+    icon: SiSnapchat, 
+    label: 'سناب شات', 
+    color: 'bg-yellow-400',
+    keywords: ['snapchat', 'سناب', 'سناب شات']
+  },
+  discord: { 
+    icon: SiDiscord, 
+    label: 'ديسكورد', 
+    color: 'bg-indigo-500',
+    keywords: ['discord', 'ديسكورد']
+  },
+  linkedin: { 
+    icon: SiLinkedin, 
+    label: 'لينكد ان', 
+    color: 'bg-blue-700',
+    keywords: ['linkedin', 'لينكد ان', 'لينكدان']
+  },
+  spotify: { 
+    icon: SiSpotify, 
+    label: 'سبوتيفاي', 
+    color: 'bg-green-500',
+    keywords: ['spotify', 'سبوتيفاي']
+  },
+  twitch: { 
+    icon: SiTwitch, 
+    label: 'تويتش', 
+    color: 'bg-purple-600',
+    keywords: ['twitch', 'تويتش']
+  },
+  google: { 
+    icon: SiGoogle, 
+    label: 'جوجل', 
+    color: 'bg-blue-500',
+    keywords: ['google', 'جوجل']
+  },
+  threads: { 
+    icon: SiThreads, 
+    label: 'ثريدز', 
+    color: 'bg-black',
+    keywords: ['threads', 'ثريدز']
+  },
+};
 
 const getPlatformPlaceholder = (platform?: string): string => {
   const placeholders: Record<string, string> = {
@@ -48,7 +149,6 @@ const getPlatformPlaceholder = (platform?: string): string => {
 };
 
 const extractExecutionTime = (serviceName: string, language: string): string => {
-  // Look for time patterns like "0-1 ساعة", "1-2 hours", "فوري", etc.
   const arabicPatterns = [
     /وقت البدأ[:\s]*(\d+[-–]\d+\s*(?:ساعة|ساعات|دقيقة|دقائق|يوم|أيام)?)/i,
     /وقت البدء[:\s]*(\d+[-–]\d+\s*(?:ساعة|ساعات|دقيقة|دقائق|يوم|أيام)?)/i,
@@ -69,7 +169,6 @@ const extractExecutionTime = (serviceName: string, language: string): string => 
     const match = serviceName.match(pattern);
     if (match && match[1]) {
       const result = match[1].trim();
-      // Add unit if missing
       if (/^\d+[-–]\d+$/.test(result)) {
         return result + (language === 'ar' ? ' ساعة' : ' hours');
       }
@@ -81,7 +180,20 @@ const extractExecutionTime = (serviceName: string, language: string): string => 
     return language === 'ar' ? 'فوري' : 'Instant';
   }
   
-  return language === 'ar' ? '1-0 ساعة' : '0-1 hour';
+  return language === 'ar' ? '0-1 ساعة' : '0-1 hour';
+};
+
+const detectPlatformFromCategory = (category: string): string | null => {
+  const lowerCategory = category.toLowerCase();
+  
+  for (const [platform, config] of Object.entries(platformConfig)) {
+    for (const keyword of config.keywords) {
+      if (lowerCategory.includes(keyword.toLowerCase())) {
+        return platform;
+      }
+    }
+  }
+  return null;
 };
 
 interface OrderFormProps {
@@ -95,47 +207,98 @@ interface OrderFormProps {
 
 export default function OrderForm({ services, categories, onSubmit, disabled = false, showCategorySelect = true, userDiscount = 0 }: OrderFormProps) {
   const { t, language } = useLanguage();
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedPlatform, setSelectedPlatform] = useState<string>('');
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
   const [selectedService, setSelectedService] = useState<string>('');
   const [link, setLink] = useState('');
   const [quantity, setQuantity] = useState('');
   const [comments, setComments] = useState('');
   const [total, setTotal] = useState(0);
+  const [showAllPlatforms, setShowAllPlatforms] = useState(false);
+
+  // Group categories by platform
+  const platformCategories = useMemo(() => {
+    const grouped: Record<string, string[]> = {};
+    const otherCategories: string[] = [];
+    
+    categories.forEach(category => {
+      const platform = detectPlatformFromCategory(category);
+      if (platform) {
+        if (!grouped[platform]) grouped[platform] = [];
+        grouped[platform].push(category);
+      } else {
+        otherCategories.push(category);
+      }
+    });
+    
+    if (otherCategories.length > 0) {
+      grouped['other'] = otherCategories;
+    }
+    
+    return grouped;
+  }, [categories]);
+
+  // Get available platforms that have services
+  const availablePlatforms = useMemo(() => {
+    const platforms = Object.keys(platformCategories).filter(p => p !== 'other');
+    return platforms;
+  }, [platformCategories]);
+
+  // Get subcategories for selected platform
+  const subcategories = useMemo(() => {
+    if (selectedPlatform === 'all') {
+      return categories;
+    }
+    return platformCategories[selectedPlatform] || [];
+  }, [selectedPlatform, platformCategories, categories]);
+
+  // Filter services by subcategory
+  const filteredServices = useMemo(() => {
+    if (selectedSubcategory) {
+      return services.filter(s => s.category === selectedSubcategory);
+    }
+    if (selectedPlatform && selectedPlatform !== 'all') {
+      const platformCats = platformCategories[selectedPlatform] || [];
+      return services.filter(s => platformCats.includes(s.category));
+    }
+    return services;
+  }, [selectedSubcategory, selectedPlatform, services, platformCategories]);
 
   // Auto-select service when there's only one service (from search results)
   useEffect(() => {
     if (services.length === 1 && selectedService !== services[0].id.toString()) {
       setSelectedService(services[0].id.toString());
-      // Also set the category for the selected service
       if (services[0].category) {
-        setSelectedCategory(services[0].category);
+        setSelectedSubcategory(services[0].category);
+        const platform = detectPlatformFromCategory(services[0].category);
+        if (platform) setSelectedPlatform(platform);
       }
     }
   }, [services]);
 
-  const filteredServices = selectedCategory 
-    ? services.filter(s => s.category === selectedCategory)
-    : services;
+  // Reset subcategory and service when platform changes
+  useEffect(() => {
+    setSelectedSubcategory('');
+    setSelectedService('');
+  }, [selectedPlatform]);
+
+  // Reset service when subcategory changes
+  useEffect(() => {
+    setSelectedService('');
+  }, [selectedSubcategory]);
 
   const currentService = services.find(s => s.id.toString() === selectedService);
   
-  // Check if this is a single-quantity service (like Discord boosts)
   const isSingleQuantityService = currentService?.maxQuantity === 1;
-  
-  // Check if this is a custom comments service
   const isCustomComments = currentService?.type === 'Custom Comments' || currentService?.type === 'Custom Comments Package';
-  
-  // Count comments lines for custom comments services
   const commentsCount = comments.split('\n').filter(c => c.trim()).length;
 
-  // Auto-set quantity to 1 when selecting a single-quantity service
   useEffect(() => {
     if (isSingleQuantityService && quantity !== '1') {
       setQuantity('1');
     }
   }, [isSingleQuantityService, currentService]);
   
-  // Clear comments when switching to non-custom-comments service
   useEffect(() => {
     if (!isCustomComments && comments) {
       setComments('');
@@ -144,16 +307,11 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
 
   useEffect(() => {
     if (currentService) {
-      // For custom comments, use comments count as quantity
       const qty = isCustomComments ? commentsCount : (parseInt(quantity) || 0);
       
       if (qty > 0) {
-        // currentService.price is already rateWithMarkup from the backend
-        // Apply user discount if available
         const priceAfterDiscount = currentService.price * (1 - userDiscount / 100);
         
-        // For single-quantity services (like Discord boosts), the rate IS the full price
-        // For regular services, rate is per 1000 units
         if (isSingleQuantityService) {
           setTotal(qty * priceAfterDiscount);
         } else {
@@ -170,7 +328,6 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
   const handleSubmit = () => {
     if (!currentService || !link) return;
     
-    // For custom comments, validate comments instead of quantity
     if (isCustomComments) {
       if (commentsCount < currentService.minQuantity || commentsCount > currentService.maxQuantity) return;
       onSubmit({
@@ -191,12 +348,15 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
     }
   };
 
-  // Validate based on service type
   const isValid = currentService && link && (
     isCustomComments 
       ? commentsCount >= currentService.minQuantity && commentsCount <= currentService.maxQuantity
       : quantity && parseInt(quantity) >= currentService.minQuantity && parseInt(quantity) <= currentService.maxQuantity
   );
+
+  // Platforms to show (first 9 or all)
+  const displayPlatforms = showAllPlatforms ? availablePlatforms : availablePlatforms.slice(0, 9);
+  const hasMorePlatforms = availablePlatforms.length > 9;
 
   return (
     <Card className="p-4">
@@ -207,51 +367,146 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
 
       <div className="space-y-4">
         {showCategorySelect && (
+          <>
+            {/* Platform Selection Grid */}
+            <div dir="rtl">
+              <Label className="text-sm text-muted-foreground mb-3 block text-right">اختار القسم</Label>
+              <div className="grid grid-cols-5 gap-2">
+                {/* All option */}
+                <button
+                  onClick={() => {
+                    setSelectedPlatform('all');
+                    setShowAllPlatforms(false);
+                  }}
+                  className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
+                    selectedPlatform === 'all' 
+                      ? 'ring-2 ring-primary bg-primary/10' 
+                      : 'bg-muted/50 hover:bg-muted'
+                  }`}
+                  data-testid="button-platform-all"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-1">
+                    <MoreHorizontal className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs truncate w-full text-center">كل شي</span>
+                </button>
+
+                {/* Platform buttons */}
+                {displayPlatforms.map(platform => {
+                  const config = platformConfig[platform];
+                  if (!config) return null;
+                  const Icon = config.icon;
+                  
+                  return (
+                    <button
+                      key={platform}
+                      onClick={() => {
+                        setSelectedPlatform(platform);
+                        setShowAllPlatforms(false);
+                      }}
+                      className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
+                        selectedPlatform === platform 
+                          ? 'ring-2 ring-primary bg-primary/10' 
+                          : 'bg-muted/50 hover:bg-muted'
+                      }`}
+                      data-testid={`button-platform-${platform}`}
+                    >
+                      <div className={`w-10 h-10 rounded-xl ${config.color} flex items-center justify-center mb-1`}>
+                        <Icon className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-xs truncate w-full text-center">{config.label}</span>
+                    </button>
+                  );
+                })}
+
+                {/* Show more/less button */}
+                {hasMorePlatforms && (
+                  <button
+                    onClick={() => setShowAllPlatforms(!showAllPlatforms)}
+                    className="flex flex-col items-center justify-center p-2 rounded-xl bg-muted/50 hover:bg-muted transition-all"
+                    data-testid="button-show-more-platforms"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-1">
+                      <MoreHorizontal className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs truncate w-full text-center">
+                      {showAllPlatforms ? 'أقل' : 'المزيد'}
+                    </span>
+                  </button>
+                )}
+
+                {/* Other category if exists */}
+                {platformCategories['other'] && platformCategories['other'].length > 0 && (
+                  <button
+                    onClick={() => setSelectedPlatform('other')}
+                    className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${
+                      selectedPlatform === 'other' 
+                        ? 'ring-2 ring-primary bg-primary/10' 
+                        : 'bg-muted/50 hover:bg-muted'
+                    }`}
+                    data-testid="button-platform-other"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-1">
+                      <MoreHorizontal className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs truncate w-full text-center">أخرى</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Subcategory Selection - Only show after platform is selected */}
+            {selectedPlatform && subcategories.length > 0 && (
+              <div dir="rtl">
+                <Label className="text-sm text-muted-foreground mb-2 block text-right">القسم</Label>
+                <Select value={selectedSubcategory} onValueChange={setSelectedSubcategory} dir="rtl">
+                  <SelectTrigger data-testid="select-subcategory" className="text-right">
+                    <SelectValue placeholder="اختر القسم" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-80 w-[calc(100vw-3rem)] max-w-md" dir="rtl">
+                    {subcategories.map(cat => (
+                      <SelectItem 
+                        key={cat} 
+                        value={cat}
+                        className="text-right py-3"
+                      >
+                        <span className="text-sm leading-relaxed">{cat}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Service Selection - Only show after subcategory is selected */}
+        {(selectedSubcategory || !showCategorySelect) && (
           <div dir="rtl">
-            <Label className="text-sm text-muted-foreground mb-2 block text-right">{t('category')}</Label>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory} dir="rtl">
-              <SelectTrigger data-testid="select-category" className="text-right">
-                <SelectValue placeholder={t('selectCategory')} />
+            <Label className="text-sm text-muted-foreground mb-2 block text-right">{t('serviceName')}</Label>
+            <Select value={selectedService} onValueChange={setSelectedService} dir="rtl">
+              <SelectTrigger data-testid="select-service" className="text-right">
+                <SelectValue placeholder={t('serviceName')} />
               </SelectTrigger>
               <SelectContent className="max-h-80 w-[calc(100vw-3rem)] max-w-md" dir="rtl">
-                {categories.map(cat => (
+                {filteredServices.map(service => (
                   <SelectItem 
-                    key={cat} 
-                    value={cat}
+                    key={service.id} 
+                    value={service.id.toString()}
                     className="text-right py-3"
                   >
-                    <span className="text-sm leading-relaxed">{cat}</span>
+                    <span className="inline-flex items-center gap-2 flex-row-reverse">
+                      <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-xs font-mono shrink-0">
+                        {service.id}
+                      </span>
+                      <span className="text-sm leading-relaxed">{service.name}</span>
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
         )}
-
-        <div dir="rtl">
-          <Label className="text-sm text-muted-foreground mb-2 block text-right">{t('serviceName')}</Label>
-          <Select value={selectedService} onValueChange={setSelectedService} dir="rtl">
-            <SelectTrigger data-testid="select-service" className="text-right">
-              <SelectValue placeholder={t('serviceName')} />
-            </SelectTrigger>
-            <SelectContent className="max-h-80 w-[calc(100vw-3rem)] max-w-md" dir="rtl">
-              {filteredServices.map(service => (
-                <SelectItem 
-                  key={service.id} 
-                  value={service.id.toString()}
-                  className="text-right py-3"
-                >
-                  <span className="inline-flex items-center gap-2 flex-row-reverse">
-                    <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-xs font-mono shrink-0">
-                      {service.id}
-                    </span>
-                    <span className="text-sm leading-relaxed">{service.name}</span>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
 
         {/* Service Description from API */}
         {currentService?.description && (
@@ -266,109 +521,114 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
           </Card>
         )}
 
-        <div>
-          <Label className="text-sm text-muted-foreground mb-2 block">{t('link')}</Label>
-          <Input 
-            type="url"
-            value={link}
-            onChange={(e) => setLink(e.target.value)}
-            placeholder={getPlatformPlaceholder(currentService?.platform)}
-            className="text-left"
-            dir="ltr"
-            data-testid="input-link"
-          />
-        </div>
-
-        {/* Custom Comments textarea for custom comments services */}
-        {isCustomComments && (
-          <div>
-            <div className="w-1/2 mb-3">
-              <Label className="text-sm text-muted-foreground mb-2 block">{t('quantity')}</Label>
+        {/* Link input - Only show after service is selected */}
+        {selectedService && (
+          <>
+            <div>
+              <Label className="text-sm text-muted-foreground mb-2 block">{t('link')}</Label>
               <Input 
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={commentsCount.toString()}
-                readOnly
+                type="url"
+                value={link}
+                onChange={(e) => setLink(e.target.value)}
+                placeholder={getPlatformPlaceholder(currentService?.platform)}
+                className="text-left"
                 dir="ltr"
-                className="text-left bg-muted/50"
-                data-testid="input-quantity-readonly"
+                data-testid="input-link"
               />
-              {currentService && (
+            </div>
+
+            {/* Custom Comments textarea for custom comments services */}
+            {isCustomComments && (
+              <div>
+                <div className="w-1/2 mb-3">
+                  <Label className="text-sm text-muted-foreground mb-2 block">{t('quantity')}</Label>
+                  <Input 
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={commentsCount.toString()}
+                    readOnly
+                    dir="ltr"
+                    className="text-left bg-muted/50"
+                    data-testid="input-quantity-readonly"
+                  />
+                  {currentService && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {t('min')}: {currentService.minQuantity.toLocaleString()} | {t('max')}: {currentService.maxQuantity.toLocaleString()}
+                    </p>
+                  )}
+                </div>
+                <Label className="text-sm text-muted-foreground mb-2 block flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  التعليقات (1 لكل سطر)
+                </Label>
+                <Textarea 
+                  value={comments}
+                  onChange={(e) => setComments(e.target.value)}
+                  placeholder="اكتب التعليقات هنا... كل تعليق في سطر جديد"
+                  dir="rtl"
+                  className="min-h-[150px] text-right"
+                  data-testid="input-comments"
+                />
                 <p className="text-xs text-muted-foreground mt-1">
-                  {t('min')}: {currentService.minQuantity.toLocaleString()} | {t('max')}: {currentService.maxQuantity.toLocaleString()}
+                  عدد التعليقات: {commentsCount}
                 </p>
-              )}
-            </div>
-            <Label className="text-sm text-muted-foreground mb-2 block flex items-center gap-2">
-              <MessageSquare className="w-4 h-4" />
-              التعليقات (1 لكل سطر)
-            </Label>
-            <Textarea 
-              value={comments}
-              onChange={(e) => setComments(e.target.value)}
-              placeholder="اكتب التعليقات هنا... كل تعليق في سطر جديد"
-              dir="rtl"
-              className="min-h-[150px] text-right"
-              data-testid="input-comments"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              عدد التعليقات: {commentsCount}
-            </p>
-          </div>
-        )}
-
-        {/* Hide quantity input for single-quantity services like Discord boosts */}
-        {!isSingleQuantityService && !isCustomComments && (
-          <div className="w-1/2">
-            <Label className="text-sm text-muted-foreground mb-2 block">{t('quantity')}</Label>
-            <Input 
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              value={quantity}
-              onChange={(e) => setQuantity(toEnglishNumbers(e.target.value).replace(/\D/g, ''))}
-              placeholder={currentService ? `${currentService.minQuantity} - ${currentService.maxQuantity}` : '1000'}
-              dir="ltr"
-              className="text-left"
-              data-testid="input-quantity"
-            />
-            {currentService && (
-              <p className="text-xs text-muted-foreground mt-1">
-                {t('min')}: {currentService.minQuantity.toLocaleString()} | {t('max')}: {currentService.maxQuantity.toLocaleString()}
-              </p>
+              </div>
             )}
-          </div>
+
+            {/* Hide quantity input for single-quantity services like Discord boosts */}
+            {!isSingleQuantityService && !isCustomComments && (
+              <div className="w-1/2">
+                <Label className="text-sm text-muted-foreground mb-2 block">{t('quantity')}</Label>
+                <Input 
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={quantity}
+                  onChange={(e) => setQuantity(toEnglishNumbers(e.target.value).replace(/\D/g, ''))}
+                  placeholder={currentService ? `${currentService.minQuantity} - ${currentService.maxQuantity}` : '1000'}
+                  dir="ltr"
+                  className="text-left"
+                  data-testid="input-quantity"
+                />
+                {currentService && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t('min')}: {currentService.minQuantity.toLocaleString()} | {t('max')}: {currentService.maxQuantity.toLocaleString()}
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <Card className="p-3 bg-muted/50">
+                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                  <Clock className="w-4 h-4" />
+                  <span className="text-xs">{t('executionTime')}</span>
+                </div>
+                <p className="font-semibold">
+                  {currentService ? extractExecutionTime(currentService.name, language) : (language === 'ar' ? '0-1 ساعة' : '0-1 hour')}
+                </p>
+              </Card>
+
+              <Card className="p-3 bg-muted/50">
+                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                  <DollarSign className="w-4 h-4" />
+                  <span className="text-xs">{t('totalAmount')}</span>
+                </div>
+                <p className="font-bold text-primary text-lg">${total.toFixed(4)}</p>
+              </Card>
+            </div>
+
+            <Button 
+              onClick={handleSubmit}
+              disabled={!isValid || disabled}
+              className="w-full bg-success hover:bg-success/90 text-success-foreground py-6 text-lg"
+              data-testid="button-confirm-order"
+            >
+              {t('confirmOrder')}
+            </Button>
+          </>
         )}
-
-        <div className="grid grid-cols-2 gap-3">
-          <Card className="p-3 bg-muted/50">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <Clock className="w-4 h-4" />
-              <span className="text-xs">{t('executionTime')}</span>
-            </div>
-            <p className="font-semibold">
-              {currentService ? extractExecutionTime(currentService.name, language) : (language === 'ar' ? '1-0 ساعة' : '0-1 hour')}
-            </p>
-          </Card>
-
-          <Card className="p-3 bg-muted/50">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <DollarSign className="w-4 h-4" />
-              <span className="text-xs">{t('totalAmount')}</span>
-            </div>
-            <p className="font-bold text-primary text-lg">${total.toFixed(4)}</p>
-          </Card>
-        </div>
-
-        <Button 
-          onClick={handleSubmit}
-          disabled={!isValid || disabled}
-          className="w-full bg-success hover:bg-success/90 text-success-foreground py-6 text-lg"
-          data-testid="button-confirm-order"
-        >
-          {t('confirmOrder')}
-        </Button>
       </div>
     </Card>
   );
