@@ -23,7 +23,7 @@ const translations: Record<string, string> = {
   'welcomeMessage': 'نحن هنا لنقدم لك أفضل الخدمات التي تستحقها.',
   'level': 'المستوى',
   'new': 'جديد',
-  'selectCategory': 'اختار المنصة',
+  'selectCategory': 'اختار القسم',
   'allServices': 'كل شي',
   'category': 'القسم',
   'serviceName': 'اسم الخدمة',
