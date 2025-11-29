@@ -102,6 +102,26 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
   const [comments, setComments] = useState('');
   const [total, setTotal] = useState(0);
 
+  // Compute available categories from the current services (already filtered by platform)
+  const availableCategories = Array.from(new Set(services.map(s => s.category))).sort();
+
+  // Reset category and service when services change (platform changed)
+  useEffect(() => {
+    // Check if selected category is still valid
+    if (selectedCategory && !availableCategories.includes(selectedCategory)) {
+      setSelectedCategory('');
+      setSelectedService('');
+    }
+  }, [services, availableCategories]);
+
+  // Reset service when category changes
+  const handleCategoryChange = (newCategory: string) => {
+    setSelectedCategory(newCategory);
+    setSelectedService(''); // Clear service selection when category changes
+    setQuantity('');
+    setLink('');
+  };
+
   // Auto-select service when there's only one service (from search results)
   useEffect(() => {
     if (services.length === 1 && selectedService !== services[0].id.toString()) {
@@ -113,9 +133,10 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
     }
   }, [services]);
 
+  // Filter services by selected category
   const filteredServices = selectedCategory 
     ? services.filter(s => s.category === selectedCategory)
-    : services;
+    : [];
 
   const currentService = services.find(s => s.id.toString() === selectedService);
   
@@ -206,15 +227,15 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
       </div>
 
       <div className="space-y-4">
-        {showCategorySelect && (
+        {showCategorySelect && availableCategories.length > 0 && (
           <div dir="rtl">
             <Label className="text-sm text-muted-foreground mb-2 block text-right">{t('category')}</Label>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory} dir="rtl">
+            <Select value={selectedCategory} onValueChange={handleCategoryChange} dir="rtl">
               <SelectTrigger data-testid="select-category" className="text-right">
                 <SelectValue placeholder={t('selectCategory')} />
               </SelectTrigger>
               <SelectContent className="max-h-80 w-[calc(100vw-3rem)] max-w-md" dir="rtl">
-                {categories.map(cat => (
+                {availableCategories.map(cat => (
                   <SelectItem 
                     key={cat} 
                     value={cat}
@@ -228,30 +249,38 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
           </div>
         )}
 
-        <div dir="rtl">
-          <Label className="text-sm text-muted-foreground mb-2 block text-right">{t('serviceName')}</Label>
-          <Select value={selectedService} onValueChange={setSelectedService} dir="rtl">
-            <SelectTrigger data-testid="select-service" className="text-right">
-              <SelectValue placeholder={t('serviceName')} />
-            </SelectTrigger>
-            <SelectContent className="max-h-80 w-[calc(100vw-3rem)] max-w-md" dir="rtl">
-              {filteredServices.map(service => (
-                <SelectItem 
-                  key={service.id} 
-                  value={service.id.toString()}
-                  className="text-right py-3"
-                >
-                  <span className="inline-flex items-center gap-2 flex-row-reverse">
-                    <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-xs font-mono shrink-0">
-                      {service.id}
+        {selectedCategory && filteredServices.length > 0 && (
+          <div dir="rtl">
+            <Label className="text-sm text-muted-foreground mb-2 block text-right">{t('serviceName')}</Label>
+            <Select value={selectedService} onValueChange={setSelectedService} dir="rtl">
+              <SelectTrigger data-testid="select-service" className="text-right">
+                <SelectValue placeholder={t('serviceName')} />
+              </SelectTrigger>
+              <SelectContent className="max-h-80 w-[calc(100vw-3rem)] max-w-md" dir="rtl">
+                {filteredServices.map(service => (
+                  <SelectItem 
+                    key={service.id} 
+                    value={service.id.toString()}
+                    className="text-right py-3"
+                  >
+                    <span className="inline-flex items-center gap-2 flex-row-reverse">
+                      <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-xs font-mono shrink-0">
+                        {service.id}
+                      </span>
+                      <span className="text-sm leading-relaxed">{service.name}</span>
                     </span>
-                    <span className="text-sm leading-relaxed">{service.name}</span>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {!selectedCategory && availableCategories.length > 0 && (
+          <div className="text-center py-4 text-muted-foreground text-sm" dir="rtl">
+            اختر القسم أولاً لعرض الخدمات المتاحة
+          </div>
+        )}
 
         {/* Service Description from API */}
         {currentService?.description && (
@@ -266,21 +295,23 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
           </Card>
         )}
 
-        <div>
-          <Label className="text-sm text-muted-foreground mb-2 block">{t('link')}</Label>
-          <Input 
-            type="url"
-            value={link}
-            onChange={(e) => setLink(e.target.value)}
-            placeholder={getPlatformPlaceholder(currentService?.platform)}
-            className="text-left"
-            dir="ltr"
-            data-testid="input-link"
-          />
-        </div>
+        {currentService && (
+          <div>
+            <Label className="text-sm text-muted-foreground mb-2 block">{t('link')}</Label>
+            <Input 
+              type="url"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              placeholder={getPlatformPlaceholder(currentService?.platform)}
+              className="text-left"
+              dir="ltr"
+              data-testid="input-link"
+            />
+          </div>
+        )}
 
         {/* Custom Comments textarea for custom comments services */}
-        {isCustomComments && (
+        {currentService && isCustomComments && (
           <div>
             <div className="w-1/2 mb-3">
               <Label className="text-sm text-muted-foreground mb-2 block">{t('quantity')}</Label>
@@ -294,11 +325,9 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
                 className="text-left bg-muted/50"
                 data-testid="input-quantity-readonly"
               />
-              {currentService && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t('min')}: {currentService.minQuantity.toLocaleString()} | {t('max')}: {currentService.maxQuantity.toLocaleString()}
-                </p>
-              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                {t('min')}: {currentService.minQuantity.toLocaleString()} | {t('max')}: {currentService.maxQuantity.toLocaleString()}
+              </p>
             </div>
             <Label className="text-sm text-muted-foreground mb-2 block flex items-center gap-2">
               <MessageSquare className="w-4 h-4" />
@@ -319,7 +348,7 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
         )}
 
         {/* Hide quantity input for single-quantity services like Discord boosts */}
-        {!isSingleQuantityService && !isCustomComments && (
+        {currentService && !isSingleQuantityService && !isCustomComments && (
           <div className="w-1/2">
             <Label className="text-sm text-muted-foreground mb-2 block">{t('quantity')}</Label>
             <Input 
@@ -328,47 +357,49 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
               pattern="[0-9]*"
               value={quantity}
               onChange={(e) => setQuantity(toEnglishNumbers(e.target.value).replace(/\D/g, ''))}
-              placeholder={currentService ? `${currentService.minQuantity} - ${currentService.maxQuantity}` : '1000'}
+              placeholder={`${currentService.minQuantity} - ${currentService.maxQuantity}`}
               dir="ltr"
               className="text-left"
               data-testid="input-quantity"
             />
-            {currentService && (
-              <p className="text-xs text-muted-foreground mt-1">
-                {t('min')}: {currentService.minQuantity.toLocaleString()} | {t('max')}: {currentService.maxQuantity.toLocaleString()}
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground mt-1">
+              {t('min')}: {currentService.minQuantity.toLocaleString()} | {t('max')}: {currentService.maxQuantity.toLocaleString()}
+            </p>
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
-          <Card className="p-3 bg-muted/50">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <Clock className="w-4 h-4" />
-              <span className="text-xs">{t('executionTime')}</span>
-            </div>
-            <p className="font-semibold">
-              {currentService ? extractExecutionTime(currentService.name, language) : (language === 'ar' ? '1-0 ساعة' : '0-1 hour')}
-            </p>
-          </Card>
+        {currentService && (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <Card className="p-3 bg-muted/50">
+                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                  <Clock className="w-4 h-4" />
+                  <span className="text-xs">{t('executionTime')}</span>
+                </div>
+                <p className="font-semibold">
+                  {extractExecutionTime(currentService.name, language)}
+                </p>
+              </Card>
 
-          <Card className="p-3 bg-muted/50">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1">
-              <DollarSign className="w-4 h-4" />
-              <span className="text-xs">{t('totalAmount')}</span>
+              <Card className="p-3 bg-muted/50">
+                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                  <DollarSign className="w-4 h-4" />
+                  <span className="text-xs">{t('totalAmount')}</span>
+                </div>
+                <p className="font-bold text-primary text-lg">${total.toFixed(4)}</p>
+              </Card>
             </div>
-            <p className="font-bold text-primary text-lg">${total.toFixed(4)}</p>
-          </Card>
-        </div>
 
-        <Button 
-          onClick={handleSubmit}
-          disabled={!isValid || disabled}
-          className="w-full bg-success hover:bg-success/90 text-success-foreground py-6 text-lg"
-          data-testid="button-confirm-order"
-        >
-          {t('confirmOrder')}
-        </Button>
+            <Button 
+              onClick={handleSubmit}
+              disabled={!isValid || disabled}
+              className="w-full bg-success hover:bg-success/90 text-success-foreground py-6 text-lg"
+              data-testid="button-confirm-order"
+            >
+              {t('confirmOrder')}
+            </Button>
+          </>
+        )}
       </div>
     </Card>
   );
