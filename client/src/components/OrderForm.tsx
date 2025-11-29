@@ -13,7 +13,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Clock, DollarSign, ShoppingCart, AlertCircle, Link2, CheckCircle, Lock, AlertTriangle, MessageSquare } from 'lucide-react';
+import { Clock, DollarSign, ShoppingCart, AlertCircle, MessageSquare } from 'lucide-react';
 
 interface Service {
   id: number;
@@ -263,119 +263,6 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
             <p className="text-sm text-muted-foreground whitespace-pre-line">
               {currentService.description}
             </p>
-          </Card>
-        )}
-
-        {/* Service Description for Discord Boost services */}
-        {currentService && !currentService.description && currentService.platform === 'discord' && 
-         currentService.name.toLowerCase().includes('boost') && (
-          <Card className="p-4 bg-muted/30 border-muted" dir="rtl">
-            <div className="flex items-center gap-2 mb-3">
-              <AlertCircle className="w-5 h-5 text-primary" />
-              <h3 className="font-semibold">وصف الخدمة</h3>
-            </div>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-start gap-2">
-                <Link2 className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                <p>يجب عليك الدخول إلى اتصال الخادم.</p>
-              </div>
-              <div className="flex items-start gap-2 text-muted-foreground">
-                <span className="text-xs">💬</span>
-                <p>رابط المثال: https://discord.gg/xxxxxx</p>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
-                <p>تتم إضافة الأعضاء إلى الخادم الخاص بك ويتم إجراء التعزيز.</p>
-              </div>
-              <div className="flex items-start gap-2 text-orange-500">
-                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-                <p>إذا تم طرد الأعضاء الذين ضغطوا على Boost من الخادم، فسيتم إلغاء التعزيز.</p>
-              </div>
-              <div className="flex items-start gap-2">
-                <Lock className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                <p>يجب ألا يحتوي الخادم على "Member Bot Verification" أو "Spam Blocker Bot".</p>
-              </div>
-              <div className="flex items-start gap-2">
-                <Lock className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                <p>يجب إيقاف مستوى التحقق.</p>
-              </div>
-              <div className="flex items-start gap-2 text-red-500">
-                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-                <p>لا توجد إمكانية لاسترداد الأموال/إعادة التعبئة عند حذف الدعوات أو حدود الدعوات.</p>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {/* Service Description for Discord Members services */}
-        {currentService && !currentService.description && currentService.platform === 'discord' && 
-         currentService.name.toLowerCase().includes('member') && (
-          <Card className="p-4 bg-muted/30 border-muted" dir="rtl">
-            <div className="flex items-center gap-2 mb-3">
-              <Link2 className="w-5 h-5 text-primary" />
-              <h3 className="font-semibold">تعليمات الطلب المسبق</h3>
-            </div>
-            <div className="space-y-4 text-sm">
-              {/* Step 1: Add Discord Bot */}
-              <div className="space-y-2">
-                <p className="font-semibold text-primary">1️⃣ إضافة بوت ديسكورد:</p>
-                <div className="space-y-1 pr-4">
-                  <p>🌐 أضف بوت ديسكورد الخاص بنا إلى خادمك من {'>'}{'>'}  <a href="https://nowon.tools" target="_blank" rel="noopener noreferrer" className="text-primary underline">https://nowon.tools</a></p>
-                  <p>🤖 يُنشئ هذا البوت رابط دعوة ولا يتطلب أذونات إضافية.</p>
-                  <p className="text-orange-500">⚠️ لا تُقيّد متطلبات البوت، فقد يمنع ذلك إكمال طلبك.</p>
-                  <p>🚪 يمكنك إزالة البوت من خادمك بعد اكتمال العملية.</p>
-                </div>
-              </div>
-
-              {/* Step 2: Anti-Raid Bots Warning */}
-              <div className="space-y-2">
-                <p className="font-semibold text-primary">2️⃣ احذر من بوتات مكافحة الغارات:</p>
-                <div className="space-y-1 pr-4">
-                  <p className="text-red-500">🛑 لا تُثبّت بوتات مكافحة الغارات على خادمك.</p>
-                  <p>🚫 قد تُعيق هذه البوتات مشاركة الأعضاء وتؤثر على طلبك.</p>
-                </div>
-              </div>
-
-              {/* Step 3: Security Level Settings */}
-              <div className="space-y-2">
-                <p className="font-semibold text-primary">3️⃣ إعدادات مستوى الأمان:</p>
-                <div className="space-y-1 pr-4">
-                  <p>🔒 يجب أن يكون مستوى أمان الخادم "بدون" أو "منخفض".</p>
-                  <p className="text-muted-foreground">🛠️ (إعدادات الخادم {'>'} إعدادات الأمان {'>'} مستوى التحقق)</p>
-                </div>
-              </div>
-
-              {/* Step 4: Member Ban Warning */}
-              <div className="space-y-2">
-                <p className="font-semibold text-primary">4️⃣ احذر من حظر الأعضاء:</p>
-                <div className="space-y-1 pr-4">
-                  <p>🚫 لا تحظر الأعضاء المنضمين أثناء العملية.</p>
-                  <p>📛 قد يُعيق الحظر العملية.</p>
-                  <p className="text-green-500">✅ يمكنك اتخاذ أي إجراء ترغب به بعد إتمام الطلب.</p>
-                </div>
-              </div>
-
-              {/* Step 5: Permanent Invite Link */}
-              <div className="space-y-2">
-                <p className="font-semibold text-primary">5️⃣ إنشاء رابط دعوة دائم:</p>
-                <div className="space-y-1 pr-4">
-                  <p>🔗 يجب أن يكون رابط دعوتك دائمًا.</p>
-                  <p>⏰ في حال وجود أي مشاكل، لديك حق التعويض لمدة 30 يومًا.</p>
-                  <p className="text-red-500">🔄 إذا كان رابط الدعوة غير صالح، يُفقد حقك في إعادة التعبئة!</p>
-                </div>
-              </div>
-
-              {/* Additional Info */}
-              <div className="mt-4 pt-4 border-t border-muted">
-                <p className="font-semibold text-primary mb-2">📜 معلومات إضافية:</p>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <p>🔗 الرابط: رابط دعوة ديسكورد غير محدود</p>
-                  <p>✅ الضمان: 30 يومًا</p>
-                  <p>⚡ التسليم: فوري (باستثناء فترة الصيانة)</p>
-                  <p>🌐 البيانات: عالمي</p>
-                </div>
-              </div>
-            </div>
           </Card>
         )}
 
