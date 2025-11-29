@@ -101,6 +101,8 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
   const [quantity, setQuantity] = useState('');
   const [comments, setComments] = useState('');
   const [total, setTotal] = useState(0);
+  const [serviceDescription, setServiceDescription] = useState<string | null>(null);
+  const [loadingDescription, setLoadingDescription] = useState(false);
 
   // Auto-select service when there's only one service (from search results)
   useEffect(() => {
@@ -141,6 +143,27 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
       setComments('');
     }
   }, [isCustomComments]);
+
+  // Fetch service description when service is selected
+  useEffect(() => {
+    if (currentService?.id) {
+      setLoadingDescription(true);
+      fetch(`/api/services/${currentService.id}/description`)
+        .then(res => res.json())
+        .then(data => {
+          setServiceDescription(data.description);
+        })
+        .catch(err => {
+          console.error('Error fetching service description:', err);
+          setServiceDescription(null);
+        })
+        .finally(() => {
+          setLoadingDescription(false);
+        });
+    } else {
+      setServiceDescription(null);
+    }
+  }, [currentService?.id]);
 
   useEffect(() => {
     if (currentService) {
@@ -253,16 +276,23 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
           </Select>
         </div>
 
-        {/* Service Description from API */}
-        {currentService?.description && (
+        {/* Service Description from database */}
+        {serviceDescription && (
           <Card className="p-4 bg-muted/30 border-muted" dir="rtl">
             <div className="flex items-center gap-2 mb-3">
               <AlertCircle className="w-5 h-5 text-primary" />
               <h3 className="font-semibold">وصف الخدمة</h3>
             </div>
             <p className="text-sm text-muted-foreground whitespace-pre-line">
-              {currentService.description}
+              {serviceDescription}
             </p>
+          </Card>
+        )}
+        {loadingDescription && currentService && (
+          <Card className="p-4 bg-muted/30 border-muted animate-pulse" dir="rtl">
+            <div className="h-4 bg-muted rounded w-24 mb-3"></div>
+            <div className="h-3 bg-muted rounded w-full mb-2"></div>
+            <div className="h-3 bg-muted rounded w-3/4"></div>
           </Card>
         )}
 

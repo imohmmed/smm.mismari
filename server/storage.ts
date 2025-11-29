@@ -7,10 +7,13 @@ import {
   type Setting,
   type Subscription,
   type InsertSubscription,
+  type ServiceDescription,
+  type InsertServiceDescription,
   users,
   orders,
   settings,
-  subscriptions
+  subscriptions,
+  serviceDescriptions
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, like, or, desc, count, sum, sql, isNotNull, notInArray } from "drizzle-orm";
@@ -64,6 +67,12 @@ export interface IStorage {
   updateSubscription(id: number, data: Partial<InsertSubscription>): Promise<Subscription | undefined>;
   deleteSubscription(id: number): Promise<boolean>;
   toggleSubscriptionStatus(id: number): Promise<Subscription | undefined>;
+  
+  // Service Descriptions
+  getServiceDescription(serviceId: number): Promise<ServiceDescription | undefined>;
+  getAllServiceDescriptions(): Promise<ServiceDescription[]>;
+  setServiceDescription(serviceId: number, description: string): Promise<ServiceDescription>;
+  deleteServiceDescription(serviceId: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -356,6 +365,41 @@ export class DatabaseStorage implements IStorage {
       .where(eq(subscriptions.id, id))
       .returning();
     return updated;
+  }
+
+  // Service Description methods
+  async getServiceDescription(serviceId: number): Promise<ServiceDescription | undefined> {
+    const [description] = await db.select().from(serviceDescriptions).where(eq(serviceDescriptions.serviceId, serviceId));
+    return description;
+  }
+
+  async getAllServiceDescriptions(): Promise<ServiceDescription[]> {
+    return db.select().from(serviceDescriptions).orderBy(desc(serviceDescriptions.updatedAt));
+  }
+
+  async setServiceDescription(serviceId: number, description: string): Promise<ServiceDescription> {
+    // Check if description exists
+    const existing = await this.getServiceDescription(serviceId);
+    
+    if (existing) {
+      // Update existing
+      const [updated] = await db.update(serviceDescriptions)
+        .set({ description, updatedAt: new Date() })
+        .where(eq(serviceDescriptions.serviceId, serviceId))
+        .returning();
+      return updated;
+    } else {
+      // Create new
+      const [created] = await db.insert(serviceDescriptions)
+        .values({ serviceId, description })
+        .returning();
+      return created;
+    }
+  }
+
+  async deleteServiceDescription(serviceId: number): Promise<boolean> {
+    await db.delete(serviceDescriptions).where(eq(serviceDescriptions.serviceId, serviceId));
+    return true;
   }
 }
 

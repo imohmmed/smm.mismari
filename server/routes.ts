@@ -1202,5 +1202,59 @@ export async function registerRoutes(
     }
   });
 
+  // ============= SERVICE DESCRIPTIONS ROUTES =============
+  
+  // Get service description (public)
+  app.get("/api/services/:serviceId/description", async (req: Request, res: Response) => {
+    try {
+      const serviceId = parseInt(req.params.serviceId);
+      const description = await storage.getServiceDescription(serviceId);
+      res.json({ description: description?.description || null });
+    } catch (error) {
+      console.error("Error fetching service description:", error);
+      res.status(500).json({ error: "Failed to fetch service description" });
+    }
+  });
+
+  // Get all service descriptions (admin)
+  app.get("/api/admin/service-descriptions", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const descriptions = await storage.getAllServiceDescriptions();
+      res.json({ descriptions });
+    } catch (error) {
+      console.error("Error fetching service descriptions:", error);
+      res.status(500).json({ error: "Failed to fetch service descriptions" });
+    }
+  });
+
+  // Set/update service description (admin)
+  app.post("/api/admin/service-descriptions", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { serviceId, description } = req.body;
+      
+      if (!serviceId || !description) {
+        return res.status(400).json({ error: "Service ID and description are required" });
+      }
+      
+      const result = await storage.setServiceDescription(parseInt(serviceId), description);
+      res.json({ success: true, description: result });
+    } catch (error) {
+      console.error("Error setting service description:", error);
+      res.status(500).json({ error: "Failed to set service description" });
+    }
+  });
+
+  // Delete service description (admin)
+  app.delete("/api/admin/service-descriptions/:serviceId", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const serviceId = parseInt(req.params.serviceId);
+      await storage.deleteServiceDescription(serviceId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting service description:", error);
+      res.status(500).json({ error: "Failed to delete service description" });
+    }
+  });
+
   return httpServer;
 }

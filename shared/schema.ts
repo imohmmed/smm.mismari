@@ -92,6 +92,22 @@ export const insertSubscriptionSchema = createInsertSchema(subscriptions).pick({
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 export type Subscription = typeof subscriptions.$inferSelect;
 
+// Service descriptions table for storing custom descriptions
+export const serviceDescriptions = pgTable("service_descriptions", {
+  id: serial("id").primaryKey(),
+  serviceId: integer("service_id").notNull().unique(),
+  description: text("description").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertServiceDescriptionSchema = createInsertSchema(serviceDescriptions).pick({
+  serviceId: true,
+  description: true,
+});
+
+export type InsertServiceDescription = z.infer<typeof insertServiceDescriptionSchema>;
+export type ServiceDescription = typeof serviceDescriptions.$inferSelect;
+
 export const serviceSchema = z.object({
   service: z.number(),
   name: z.string(),
