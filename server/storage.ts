@@ -39,6 +39,7 @@ export interface IStorage {
   getOrdersWithApiId(): Promise<Order[]>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(orderId: number, status: string, apiOrderId?: number, startCount?: number, remains?: number): Promise<Order | undefined>;
+  processRefund(orderId: number): Promise<{ success: boolean; order?: Order; user?: User }>;
   countOrders(): Promise<number>;
   getCompletedOrdersCount(userId: string): Promise<number>;
   
@@ -220,6 +221,41 @@ export class DatabaseStorage implements IStorage {
       .where(eq(orders.id, orderId))
       .returning();
     return updated;
+  }
+
+  async processRefund(orderId: number): Promise<{ success: boolean; order?: Order; user?: User }> {
+    // Get the order
+    const [order] = await db.select().from(orders).where(eq(orders.id, orderId));
+    if (!order) return { success: false };
+    
+    // Check if already refunded
+    if (order.refunded === 1) {
+      return { success: false, order };
+    }
+    
+    // Get the user
+    const user = await this.getUser(order.userId);
+    if (!user) return { success: false, order };
+    
+    // Refund the amount to user's balance
+    const refundAmount = order.charge;
+    const newBalance = user.balance + refundAmount;
+    
+    // Update user balance
+    const [updatedUser] = await db.update(users)
+      .set({ balance: newBalance })
+      .where(eq(users.id, order.userId))
+      .returning();
+    
+    // Mark order as refunded
+    const [updatedOrder] = await db.update(orders)
+      .set({ refunded: 1 })
+      .where(eq(orders.id, orderId))
+      .returning();
+    
+    console.log(`[Refund] Order ${orderId}: Refunded $${refundAmount.toFixed(4)} to user ${user.username}. New balance: $${newBalance.toFixed(4)}`);
+    
+    return { success: true, order: updatedOrder, user: updatedUser };
   }
 
   cacheServices(services: ServiceWithMarkup[]): void {

@@ -849,6 +849,14 @@ export async function registerRoutes(
                 
                 if (statusChanged || remainsChanged || startCountChanged) {
                   await storage.updateOrderStatus(order.id, newStatus, undefined, startCount, remains);
+                  
+                  // Process refund if order is cancelled or refunded
+                  if ((newStatus === 'Cancelled' || newStatus === 'Refunded') && order.status !== newStatus) {
+                    const refundResult = await storage.processRefund(order.id);
+                    if (refundResult.success) {
+                      console.log(`[Auto-Refund] Order ${order.id} refunded automatically due to status: ${newStatus}`);
+                    }
+                  }
                 }
               }
             } catch (orderSyncError) {
@@ -900,7 +908,17 @@ export async function registerRoutes(
         const remains = safeParseInt(apiStatus.remains);
         
         const updated = await storage.updateOrderStatus(order.id, newStatus, undefined, startCount, remains);
-        res.json({ success: true, order: updated, apiStatus });
+        
+        // Process refund if order is cancelled or refunded
+        let refundResult = null;
+        if ((newStatus === 'Cancelled' || newStatus === 'Refunded') && order.status !== newStatus) {
+          refundResult = await storage.processRefund(order.id);
+          if (refundResult.success) {
+            console.log(`[Manual-Sync-Refund] Order ${order.id} refunded due to status: ${newStatus}`);
+          }
+        }
+        
+        res.json({ success: true, order: updated, apiStatus, refundProcessed: refundResult?.success || false });
       } else {
         res.json({ success: false, error: "Could not fetch status from API" });
       }

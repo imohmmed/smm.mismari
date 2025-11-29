@@ -38,6 +38,7 @@ export const orders = pgTable("orders", {
   apiOrderId: integer("api_order_id"),
   startCount: integer("start_count"),
   remains: integer("remains"),
+  refunded: integer("refunded").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
