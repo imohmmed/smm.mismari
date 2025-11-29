@@ -54,6 +54,7 @@ export interface CreateOrderRequest {
   serviceId: number;
   link: string;
   quantity: number;
+  comments?: string;
 }
 
 export interface CreateOrderResponse {

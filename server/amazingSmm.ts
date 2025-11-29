@@ -91,14 +91,22 @@ export class AmazingSmmApi {
     }
   }
 
-  // Create a new order
-  async createOrder(serviceId: number, link: string, quantity: number): Promise<{ order: number } | { error: string }> {
+  // Create a new order (supports both regular and custom comments)
+  async createOrder(serviceId: number, link: string, quantity: number, comments?: string): Promise<{ order: number } | { error: string }> {
     try {
-      const data = await this.request('add', {
+      const params: Record<string, string | number> = {
         service: serviceId,
         link,
-        quantity,
-      });
+      };
+      
+      // For custom comments, send comments instead of quantity
+      if (comments) {
+        params.comments = comments;
+      } else {
+        params.quantity = quantity;
+      }
+      
+      const data = await this.request('add', params);
       return data;
     } catch (error) {
       console.error('Error creating order:', error);

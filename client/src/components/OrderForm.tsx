@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { toEnglishNumbers } from '@/lib/utils';
 import { 
   Select, 
@@ -12,7 +13,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Clock, DollarSign, ShoppingCart, AlertCircle, Link2, CheckCircle, Lock, AlertTriangle } from 'lucide-react';
+import { Clock, DollarSign, ShoppingCart, AlertCircle, Link2, CheckCircle, Lock, AlertTriangle, MessageSquare } from 'lucide-react';
 
 interface Service {
   id: number;
@@ -22,6 +23,7 @@ interface Service {
   maxQuantity: number;
   category: string;
   platform?: string;
+  type?: string;
 }
 
 const getPlatformPlaceholder = (platform?: string): string => {
@@ -84,7 +86,7 @@ const extractExecutionTime = (serviceName: string, language: string): string => 
 interface OrderFormProps {
   services: Service[];
   categories: string[];
-  onSubmit: (order: { serviceId: number; link: string; quantity: number; total: number }) => void;
+  onSubmit: (order: { serviceId: number; link: string; quantity: number; total: number; comments?: string }) => void;
   disabled?: boolean;
   showCategorySelect?: boolean;
   userDiscount?: number;
@@ -96,6 +98,7 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
   const [selectedService, setSelectedService] = useState<string>('');
   const [link, setLink] = useState('');
   const [quantity, setQuantity] = useState('');
+  const [comments, setComments] = useState('');
   const [total, setTotal] = useState(0);
 
   // Auto-select service when there's only one service (from search results)
@@ -117,6 +120,12 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
   
   // Check if this is a single-quantity service (like Discord boosts)
   const isSingleQuantityService = currentService?.maxQuantity === 1;
+  
+  // Check if this is a custom comments service
+  const isCustomComments = currentService?.type === 'Custom Comments' || currentService?.type === 'Custom Comments Package';
+  
+  // Count comments lines for custom comments services
+  const commentsCount = comments.split('\n').filter(c => c.trim()).length;
 
   // Auto-set quantity to 1 when selecting a single-quantity service
   useEffect(() => {
@@ -124,40 +133,69 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
       setQuantity('1');
     }
   }, [isSingleQuantityService, currentService]);
+  
+  // Clear comments when switching to non-custom-comments service
+  useEffect(() => {
+    if (!isCustomComments && comments) {
+      setComments('');
+    }
+  }, [isCustomComments]);
 
   useEffect(() => {
-    if (currentService && quantity) {
-      const qty = parseInt(quantity) || 0;
-      // currentService.price is already rateWithMarkup from the backend
-      // Apply user discount if available
-      const priceAfterDiscount = currentService.price * (1 - userDiscount / 100);
+    if (currentService) {
+      // For custom comments, use comments count as quantity
+      const qty = isCustomComments ? commentsCount : (parseInt(quantity) || 0);
       
-      // For single-quantity services (like Discord boosts), the rate IS the full price
-      // For regular services, rate is per 1000 units
-      if (isSingleQuantityService) {
-        setTotal(qty * priceAfterDiscount);
+      if (qty > 0) {
+        // currentService.price is already rateWithMarkup from the backend
+        // Apply user discount if available
+        const priceAfterDiscount = currentService.price * (1 - userDiscount / 100);
+        
+        // For single-quantity services (like Discord boosts), the rate IS the full price
+        // For regular services, rate is per 1000 units
+        if (isSingleQuantityService) {
+          setTotal(qty * priceAfterDiscount);
+        } else {
+          setTotal((qty / 1000) * priceAfterDiscount);
+        }
       } else {
-        setTotal((qty / 1000) * priceAfterDiscount);
+        setTotal(0);
       }
     } else {
       setTotal(0);
     }
-  }, [currentService, quantity, userDiscount, isSingleQuantityService]);
+  }, [currentService, quantity, comments, commentsCount, userDiscount, isSingleQuantityService, isCustomComments]);
 
   const handleSubmit = () => {
-    if (!currentService || !link || !quantity) return;
+    if (!currentService || !link) return;
     
-    onSubmit({
-      serviceId: currentService.id,
-      link,
-      quantity: parseInt(quantity),
-      total
-    });
+    // For custom comments, validate comments instead of quantity
+    if (isCustomComments) {
+      if (commentsCount < currentService.minQuantity || commentsCount > currentService.maxQuantity) return;
+      onSubmit({
+        serviceId: currentService.id,
+        link,
+        quantity: commentsCount,
+        total,
+        comments: comments.trim()
+      });
+    } else {
+      if (!quantity) return;
+      onSubmit({
+        serviceId: currentService.id,
+        link,
+        quantity: parseInt(quantity),
+        total
+      });
+    }
   };
 
-  const isValid = currentService && link && quantity && 
-    parseInt(quantity) >= currentService.minQuantity &&
-    parseInt(quantity) <= currentService.maxQuantity;
+  // Validate based on service type
+  const isValid = currentService && link && (
+    isCustomComments 
+      ? commentsCount >= currentService.minQuantity && commentsCount <= currentService.maxQuantity
+      : quantity && parseInt(quantity) >= currentService.minQuantity && parseInt(quantity) <= currentService.maxQuantity
+  );
 
   return (
     <Card className="p-4">
@@ -340,8 +378,47 @@ export default function OrderForm({ services, categories, onSubmit, disabled = f
           />
         </div>
 
+        {/* Custom Comments textarea for custom comments services */}
+        {isCustomComments && (
+          <div>
+            <div className="w-1/2 mb-3">
+              <Label className="text-sm text-muted-foreground mb-2 block">{t('quantity')}</Label>
+              <Input 
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={commentsCount.toString()}
+                readOnly
+                dir="ltr"
+                className="text-left bg-muted/50"
+                data-testid="input-quantity-readonly"
+              />
+              {currentService && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t('min')}: {currentService.minQuantity.toLocaleString()} | {t('max')}: {currentService.maxQuantity.toLocaleString()}
+                </p>
+              )}
+            </div>
+            <Label className="text-sm text-muted-foreground mb-2 block flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" />
+              التعليقات (1 لكل سطر)
+            </Label>
+            <Textarea 
+              value={comments}
+              onChange={(e) => setComments(e.target.value)}
+              placeholder="اكتب التعليقات هنا... كل تعليق في سطر جديد"
+              dir="rtl"
+              className="min-h-[150px] text-right"
+              data-testid="input-comments"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              عدد التعليقات: {commentsCount}
+            </p>
+          </div>
+        )}
+
         {/* Hide quantity input for single-quantity services like Discord boosts */}
-        {!isSingleQuantityService && (
+        {!isSingleQuantityService && !isCustomComments && (
           <div className="w-1/2">
             <Label className="text-sm text-muted-foreground mb-2 block">{t('quantity')}</Label>
             <Input 

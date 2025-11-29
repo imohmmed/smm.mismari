@@ -124,9 +124,10 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     maxQuantity: parseInt(s.max),
     category: s.category,
     platform: s.platform,
+    type: s.type,
   }));
 
-  const handleOrderSubmit = (order: { serviceId: number; link: string; quantity: number; total: number }) => {
+  const handleOrderSubmit = (order: { serviceId: number; link: string; quantity: number; total: number; comments?: string }) => {
     if (!user) {
       toast({
         title: language === 'ar' ? 'يرجى تسجيل الدخول' : 'Please login',
@@ -140,6 +141,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
       serviceId: order.serviceId,
       link: order.link,
       quantity: order.quantity,
+      ...(order.comments ? { comments: order.comments } : {}),
     });
   };
 

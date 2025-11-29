@@ -708,7 +708,7 @@ export async function registerRoutes(
 
   app.post("/api/orders", requireAuth, async (req: Request, res: Response) => {
     try {
-      const { serviceId, link, quantity } = req.body;
+      const { serviceId, link, quantity, comments } = req.body;
       const userId = req.session.userId!;
       
       const service = storage.getServiceById(serviceId);
@@ -716,9 +716,17 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Service not found" });
       }
 
+      // Check if this is a custom comments service
+      const isCustomComments = service.type === 'Custom Comments' || service.type === 'Custom Comments Package';
+      
+      // For custom comments, quantity is the number of comments
+      const effectiveQuantity = isCustomComments && comments 
+        ? comments.split('\n').filter((c: string) => c.trim()).length 
+        : quantity;
+
       const minQty = parseInt(String(service.min));
       const maxQty = parseInt(String(service.max));
-      if (quantity < minQty || quantity > maxQty) {
+      if (effectiveQuantity < minQty || effectiveQuantity > maxQty) {
         return res.status(400).json({ 
           error: `Quantity must be between ${minQty} and ${maxQty}` 
         });
@@ -735,8 +743,8 @@ export async function registerRoutes(
       const maxQtyNum = parseInt(String(service.max));
       const isSingleQuantityService = maxQtyNum === 1;
       const baseCharge = isSingleQuantityService 
-        ? quantity * service.rateWithMarkup 
-        : (quantity / 1000) * service.rateWithMarkup;
+        ? effectiveQuantity * service.rateWithMarkup 
+        : (effectiveQuantity / 1000) * service.rateWithMarkup;
       const userDiscount = user.discount || 0;
       const discountAmount = (baseCharge * userDiscount) / 100;
       const charge = baseCharge - discountAmount;
@@ -750,7 +758,8 @@ export async function registerRoutes(
       let apiOrderId: number | undefined;
       try {
         const api = getAmazingSmmApi();
-        const result = await api.createOrder(serviceId, link, quantity);
+        // Pass comments for custom comments services
+        const result = await api.createOrder(serviceId, link, effectiveQuantity, isCustomComments ? comments : undefined);
         
         if ("error" in result) {
           await storage.updateUserBalance(userId, charge, "add");
@@ -766,7 +775,7 @@ export async function registerRoutes(
         serviceId,
         serviceName: service.name,
         link,
-        quantity,
+        quantity: effectiveQuantity,
         charge,
       });
 
