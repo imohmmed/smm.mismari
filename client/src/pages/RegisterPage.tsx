@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, User, Phone, Loader2, Check, X } from "lucide-react";
+import { Mail, Lock, User, Phone, Loader2, Check, X, RefreshCw, Shield } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { toEnglishNumbers } from "@/lib/utils";
 
@@ -22,6 +22,28 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  
+  const [captchaQuestion, setCaptchaQuestion] = useState("");
+  const [captchaAnswer, setCaptchaAnswer] = useState("");
+  const [captchaLoading, setCaptchaLoading] = useState(false);
+  
+  const fetchCaptcha = useCallback(async () => {
+    setCaptchaLoading(true);
+    try {
+      const response = await fetch("/api/captcha");
+      const data = await response.json();
+      setCaptchaQuestion(data.question);
+      setCaptchaAnswer("");
+    } catch (error) {
+      console.error("Failed to fetch captcha:", error);
+    } finally {
+      setCaptchaLoading(false);
+    }
+  }, []);
+  
+  useEffect(() => {
+    fetchCaptcha();
+  }, [fetchCaptcha]);
   
   const [usernameStatus, setUsernameStatus] = useState<{
     checking: boolean;
@@ -87,10 +109,19 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!captchaAnswer) {
+      toast({
+        title: t("error"),
+        description: "يرجى حل رمز التحقق",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      await register(username, email, password, phone || undefined);
+      await register(username, email, password, phone || undefined, captchaAnswer);
       toast({
         title: t("registerSuccess"),
         variant: "default",
@@ -102,6 +133,8 @@ export default function RegisterPage() {
         description: error.message,
         variant: "destructive",
       });
+      // Refresh captcha on error
+      fetchCaptcha();
     } finally {
       setIsLoading(false);
     }
@@ -230,6 +263,46 @@ export default function RegisterPage() {
                   data-testid="input-confirm-password"
                 />
               </div>
+            </div>
+
+            {/* CAPTCHA */}
+            <div className="space-y-2">
+              <Label>رمز التحقق</Label>
+              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border">
+                <Shield className="w-5 h-5 text-primary" />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    {captchaLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <span className="text-lg font-bold text-foreground" dir="ltr">
+                        {captchaQuestion} = ?
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={fetchCaptcha}
+                  disabled={captchaLoading}
+                  data-testid="button-refresh-captcha"
+                >
+                  <RefreshCw className={`w-4 h-4 ${captchaLoading ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
+              <Input
+                type="number"
+                inputMode="numeric"
+                value={captchaAnswer}
+                onChange={(e) => setCaptchaAnswer(toEnglishNumbers(e.target.value))}
+                placeholder="أدخل الناتج"
+                required
+                dir="ltr"
+                className="text-center text-lg"
+                data-testid="input-captcha"
+              />
             </div>
 
             <Button

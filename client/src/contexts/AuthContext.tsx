@@ -19,7 +19,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (username: string, email: string, password: string, phone?: string) => Promise<void>;
+  register: (username: string, email: string, password: string, phone?: string, captchaAnswer?: string) => Promise<void>;
   logout: () => Promise<void>;
   refetchUser: () => void;
 }
@@ -56,10 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (username: string, email: string, password: string, phone?: string) => {
+  const register = async (username: string, email: string, password: string, phone?: string, captchaAnswer?: string) => {
     setIsAuthenticating(true);
     try {
-      const res = await apiRequest("POST", "/api/auth/register", { username, email, password, phone });
+      const res = await apiRequest("POST", "/api/auth/register", { username, email, password, phone, captchaAnswer });
       const result = await res.json();
       if (result.error) {
         throw new Error(Array.isArray(result.error) ? result.error[0].message : result.error);

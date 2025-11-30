@@ -18,7 +18,37 @@ declare module "express-session" {
   interface SessionData {
     userId: string;
     role: string;
+    captcha?: {
+      answer: number;
+      expires: number;
+    };
   }
+}
+
+function generateCaptcha(): { question: string; answer: number } {
+  const num1 = Math.floor(Math.random() * 10) + 1;
+  const num2 = Math.floor(Math.random() * 10) + 1;
+  const operators = ['+', '-', '×'] as const;
+  const operator = operators[Math.floor(Math.random() * operators.length)];
+  
+  let answer: number;
+  switch (operator) {
+    case '+':
+      answer = num1 + num2;
+      break;
+    case '-':
+      answer = Math.max(num1, num2) - Math.min(num1, num2);
+      break;
+    case '×':
+      answer = num1 * num2;
+      break;
+  }
+  
+  const question = operator === '-' 
+    ? `${Math.max(num1, num2)} ${operator} ${Math.min(num1, num2)}`
+    : `${num1} ${operator} ${num2}`;
+  
+  return { question, answer };
 }
 
 const requireAuth = (req: Request, res: Response, next: NextFunction) => {
@@ -98,9 +128,43 @@ export async function registerRoutes(
 
   await seedAdminUser();
 
+  // CAPTCHA endpoints
+  app.get("/api/captcha", (req: Request, res: Response) => {
+    const captcha = generateCaptcha();
+    req.session.captcha = {
+      answer: captcha.answer,
+      expires: Date.now() + 5 * 60 * 1000, // 5 minutes
+    };
+    req.session.save((err) => {
+      if (err) {
+        return res.status(500).json({ error: "Failed to generate captcha" });
+      }
+      res.json({ question: captcha.question });
+    });
+  });
+
   app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {
-      const data = registerSchema.parse(req.body);
+      const { captchaAnswer, ...userData } = req.body;
+      
+      // Validate CAPTCHA
+      if (!req.session.captcha) {
+        return res.status(400).json({ error: "يرجى تحديث رمز التحقق" });
+      }
+      
+      if (Date.now() > req.session.captcha.expires) {
+        delete req.session.captcha;
+        return res.status(400).json({ error: "انتهت صلاحية رمز التحقق، يرجى التحديث" });
+      }
+      
+      if (parseInt(captchaAnswer) !== req.session.captcha.answer) {
+        return res.status(400).json({ error: "إجابة رمز التحقق غير صحيحة" });
+      }
+      
+      // Clear captcha after successful validation
+      delete req.session.captcha;
+      
+      const data = registerSchema.parse(userData);
       
       const existingUser = await storage.getUserByEmail(data.email);
       if (existingUser) {
