@@ -25,11 +25,29 @@ export default function OrdersPage({ onNavigate, onRepeatOrder }: OrdersPageProp
     queryFn: fetchOrders,
     enabled: !!user,
     retry: false,
-    refetchInterval: 30000, // Auto-refresh every 30 seconds
-    refetchIntervalInBackground: false, // Don't refetch when tab is not visible
+    staleTime: 60000, // 1 minute stale time
+    refetchIntervalInBackground: false,
   });
 
   const orders = ordersData?.orders || [];
+  
+  // Check if there are pending/processing orders that need polling
+  const hasPendingOrders = orders.some(order => 
+    ['Pending', 'In progress', 'Processing', 'Partial'].includes(order.status)
+  );
+  
+  // Separate polling query - only runs when there are pending orders
+  useQuery({
+    queryKey: ['/api/orders', 'auto-refresh'],
+    queryFn: async () => {
+      const data = await fetchOrders();
+      return data;
+    },
+    enabled: !!user && hasPendingOrders && orders.length > 0,
+    refetchInterval: 30000,
+    refetchIntervalInBackground: false,
+    staleTime: 0,
+  });
 
   // Show empty state if user is not logged in or there's an error
   if (!user || error) {

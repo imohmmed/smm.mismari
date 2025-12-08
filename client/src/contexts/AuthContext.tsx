@@ -33,8 +33,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data, isLoading, refetch } = useQuery<{ user?: User }>({
     queryKey: ["/api/auth/me"],
     retry: false,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes - reduces unnecessary refetches
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   const user = data?.user || null;
@@ -76,7 +76,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiRequest("POST", "/api/auth/logout", {});
     } finally {
       queryClient.setQueryData(["/api/auth/me"], { user: null });
-      queryClient.clear();
+      // Only invalidate user-specific queries, not the entire cache
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth"] });
     }
   };
 
