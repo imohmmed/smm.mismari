@@ -52,7 +52,8 @@ export default function AdminDashboard() {
   const { data: stats, isLoading: statsLoading } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
     enabled: isAdmin,
-    refetchInterval: 30000,
+    staleTime: 2 * 60 * 1000, // 2 minutes - reduces refetching
+    refetchInterval: 60000, // 1 minute instead of 30 seconds
   });
 
   const updateMarginMutation = useMutation({

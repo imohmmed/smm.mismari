@@ -72,6 +72,7 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
 
   const { data: statsData } = useQuery<{ orders?: number; users?: number; services?: number }>({
     queryKey: ['/api/stats'],
+    staleTime: 5 * 60 * 1000, // 5 minutes - stats don't need real-time updates
   });
 
   const stats = {

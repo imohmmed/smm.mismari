@@ -77,6 +77,7 @@ export default function AdminUsers() {
       const res = await fetch(url);
       return res.json();
     },
+    staleTime: 2 * 60 * 1000, // 2 minutes - reduces refetching
   });
 
   const balanceMutation = useMutation({

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -66,6 +66,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const { data: servicesData, isLoading: servicesLoading } = useQuery({
     queryKey: ['/api/services', selectedPlatform],
     queryFn: () => fetchServices(selectedPlatform || undefined),
+    staleTime: 5 * 60 * 1000, // 5 minutes - services don't change frequently
   });
 
   const { data: balanceData } = useQuery({
@@ -76,6 +77,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
   const { data: subscriptionsData, isLoading: subscriptionsLoading } = useQuery<{ subscriptions: Subscription[] }>({
     queryKey: ['/api/subscriptions'],
+    staleTime: 5 * 60 * 1000, // 5 minutes - subscriptions don't change frequently
   });
 
   const subscriptions = subscriptionsData?.subscriptions || [];
@@ -109,24 +111,28 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const services = servicesData?.services || [];
   const categories = servicesData?.categories || [];
 
-  const filteredServices = services.filter(service => {
-    const matchesSearch = !searchQuery || 
-      service.name.includes(searchQuery) || 
-      service.service.toString().includes(searchQuery);
-    return matchesSearch;
-  });
+  // Memoize filtered services to avoid recalculation on every render
+  const filteredServices = useMemo(() => 
+    services.filter(service => {
+      const matchesSearch = !searchQuery || 
+        service.name.includes(searchQuery) || 
+        service.service.toString().includes(searchQuery);
+      return matchesSearch;
+    }), [services, searchQuery]);
 
-  const formServices = filteredServices.map(s => ({
-    id: s.service,
-    name: s.name,
-    price: s.rateWithMarkup,
-    minQuantity: parseInt(s.min),
-    maxQuantity: parseInt(s.max),
-    category: s.category,
-    platform: s.platform,
-    type: s.type,
-    description: s.description,
-  }));
+  // Memoize form services transformation
+  const formServices = useMemo(() => 
+    filteredServices.map(s => ({
+      id: s.service,
+      name: s.name,
+      price: s.rateWithMarkup,
+      minQuantity: parseInt(s.min),
+      maxQuantity: parseInt(s.max),
+      category: s.category,
+      platform: s.platform,
+      type: s.type,
+      description: s.description,
+    })), [filteredServices]);
 
   const handleOrderSubmit = (order: { serviceId: number; link: string; quantity: number; total: number; comments?: string }) => {
     if (!user) {

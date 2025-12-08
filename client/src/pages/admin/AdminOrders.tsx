@@ -40,6 +40,7 @@ export default function AdminOrders() {
 
   const { data, isLoading } = useQuery<{ orders: Order[] }>({
     queryKey: ["/api/admin/orders"],
+    staleTime: 2 * 60 * 1000, // 2 minutes - reduces refetching
   });
 
   const orders = data?.orders || [];
