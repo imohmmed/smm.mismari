@@ -51,6 +51,26 @@ function generateCaptcha(): { question: string; answer: number } {
   return { question, answer };
 }
 
+// Translate Amazing SMM API errors to Arabic
+function translateApiError(error: string): string {
+  const errorMessages: Record<string, string> = {
+    'neworder.error.username': 'الرابط غير صحيح. تأكد من أن الرابط كامل وصحيح للخدمة المطلوبة',
+    'neworder.error.link': 'الرابط غير صالح. يرجى التحقق من الرابط وإعادة المحاولة',
+    'neworder.error.link_duplicate': 'يوجد طلب سابق بنفس الرابط',
+    'neworder.error.service': 'الخدمة غير متوفرة حالياً',
+    'neworder.error.quantity': 'الكمية المطلوبة خارج النطاق المسموح',
+    'neworder.error.min': 'الكمية أقل من الحد الأدنى المسموح',
+    'neworder.error.max': 'الكمية أكثر من الحد الأقصى المسموح',
+    'neworder.error.balance': 'رصيد الموزع غير كافٍ، يرجى التواصل مع الدعم',
+    'neworder.error.disabled': 'هذه الخدمة معطلة مؤقتاً',
+    'order.not_found': 'الطلب غير موجود',
+    'order.cancel_not_allowed': 'لا يمكن إلغاء هذا الطلب',
+    'Insufficient balance': 'عفواً، رصيدك غير كافٍ لهذا الطلب',
+  };
+
+  return errorMessages[error] || `خطأ: ${error}`;
+}
+
 const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: "Unauthorized" });
@@ -827,7 +847,9 @@ export async function registerRoutes(
         
         if ("error" in result) {
           await storage.updateUserBalance(userId, charge, "add");
-          return res.status(400).json({ error: result.error });
+          // Translate API error messages to Arabic
+          const errorMessage = translateApiError(result.error);
+          return res.status(400).json({ error: errorMessage });
         }
         apiOrderId = result.order;
       } catch {
