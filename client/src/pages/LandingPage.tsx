@@ -218,7 +218,7 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
               animate={{ opacity: 0.9 }}
               transition={{ duration: 0.5, delay: 0.5 }}
             >
-              AlAli لخدمات مواقع التواصل هي أرخص لوحة SMM تقدم مجموعة متنوعة من خدمات زيادة المتابعين والإعجابات والمشاهدات.
+              Mismari SMM هي أرخص لوحة SMM تقدم مجموعة متنوعة من خدمات زيادة المتابعين والإعجابات والمشاهدات.
             </motion.p>
             <motion.div 
               className="flex items-center justify-center gap-2 text-sm"
@@ -430,7 +430,7 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
             انضم إلى آلاف العملاء الراضين وابدأ في تنمية حساباتك على السوشيال ميديا اليوم.
           </motion.p>
           <motion.div 
-            className="flex gap-3 justify-center"
+            className="flex gap-3 justify-center flex-wrap"
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -454,6 +454,46 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
                 إنشاء حساب
               </Button>
             )}
+          </motion.div>
+
+          {/* Social Links */}
+          <motion.div
+            className="flex gap-4 justify-center mt-5 pt-4 border-t border-border/40"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.5 }}
+          >
+            <a
+              href="https://www.instagram.com/mismari.co"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-pink-500 transition-colors"
+              data-testid="link-instagram"
+            >
+              <SiInstagram className="w-4 h-4 text-pink-500" />
+              <span>انستاكرام</span>
+            </a>
+            <a
+              href="https://t.me/iMismari"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-blue-400 transition-colors"
+              data-testid="link-telegram"
+            >
+              <SiTelegram className="w-4 h-4 text-blue-400" />
+              <span>تيليكرام</span>
+            </a>
+            <a
+              href="https://wa.me/9647766699669"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-green-500 transition-colors"
+              data-testid="link-whatsapp"
+            >
+              <SiWhatsapp className="w-4 h-4 text-green-500" />
+              <span>واتساب</span>
+            </a>
           </motion.div>
         </Card>
       </motion.div>
